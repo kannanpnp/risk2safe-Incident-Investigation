@@ -1078,14 +1078,18 @@ function renderCA(){
       return `<tr>
         <td>${cf?("▲ "+esc(cfLabel(cf))):"<i class='muted'>unlinked</i>"}</td>
         <td style="font-size:12px">${esc(a.rc)}</td>
-        <td><textarea placeholder="What will change, who is accountable, by when, and how will effectiveness be verified?" oninput="setAction('${a.id}','action',this.value)">${esc(a.action)}</textarea></td>
+        <td><textarea placeholder="What will change, who is accountable, by when, and how will effectiveness be verified?" oninput="setAction('${a.id}','action',this.value)">${esc(a.action)}</textarea>
+          <div style="margin-top:3px"><button class="btn small" title="AI-draft a SMARTER action for this specific root cause" onclick="aiSuggestAction('${a.id}')">🤖 Suggest</button></div>
+          <div id="ai-sg-${a.id}"></div></td>
         <td><input type="text" value="${esc(a.owner)}" oninput="setAction('${a.id}','owner',this.value)"></td>
         <td><input type="date" value="${esc(a.due)}" oninput="setAction('${a.id}','due',this.value)"></td>
         <td><select onchange="setAction('${a.id}','status',this.value)">${["Open","In progress","Implemented","Verified effective"].map(s=>`<option ${a.status===s?"selected":""}>${s}</option>`).join("")}</select></td>
         <td><button class="btn small danger" onclick="delAction('${a.id}')">✕</button></td>
       </tr>`;}).join("") +
     `</tbody></table>
-    <div style="margin-top:10px"><button class="btn" onclick="addExtraAction()">+ Add another action</button></div>
+    <div class="flex" style="margin-top:10px"><button class="btn" onclick="addExtraAction()">+ Add another action</button>
+    <button class="btn ai" id="ai-btn-cons" onclick="aiConsolidate()">🤖 AI Consolidate similar actions</button></div>
+    <div class="ai-out" id="ai-out-cons" style="margin-top:10px"></div>
     <div class="hint" style="margin-top:10px"><b>Hierarchy of fixes (most → least effective):</b> remove the hazard / error-proof the design → guards & safeguards → warnings, alarms & displays → procedures & administrative controls → training & reminders. Prefer the highest practical level.</div>`;
 }
 
@@ -1267,6 +1271,84 @@ ${actionsText()}`;
   }finally{
     btn.disabled = false;
   }
+}
+
+/* ===== per-row AI suggestions & consolidation ===== */
+const aiSuggestions = {};
+async function aiCall(sys,user,maxTok){
+  const ai=getAI();
+  const res = await fetch("https://api.openai.com/v1/chat/completions",{method:"POST",
+    headers:{"Content-Type":"application/json","Authorization":"Bearer "+ai.key},
+    body:JSON.stringify({model:ai.model||"gpt-4o-mini",temperature:0.3,max_tokens:maxTok||500,
+      messages:[{role:"system",content:sys},{role:"user",content:user}]})});
+  if(!res.ok){ const eb=await res.json().catch(()=>({})); throw new Error(res.status+" "+(eb.error&&eb.error.message||res.statusText)); }
+  const d=await res.json();
+  return d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content||"";
+}
+async function aiSuggestAction(id){
+  const a=state.actions.find(x=>x.id===id); if(!a) return;
+  if(!getAI().key){ openAISettings(); return; }
+  const box=document.getElementById("ai-sg-"+id);
+  box.innerHTML='<span class="muted" style="font-size:11px">⏳ drafting suggestion…</span>';
+  const cf=state.items.find(i=>i.id===a.cfId);
+  const conds=cf?state.items.filter(i=>i.parent===cf.id).map(c=>c.text).filter(Boolean).join(" • "):"";
+  try{
+    const txt=(await aiCall(
+      "You are a senior safety engineer writing corrective actions for incident investigations using SMARTER criteria (Specific, Measurable, Accountable, Reasonable, Timely, Effective, Reviewed) and the hierarchy of controls (eliminate/error-proof > guards > warnings > procedures/admin > training). Reply with ONE corrective action only: 2-4 plain sentences including what will change, who should own it (a role, not a name), a realistic timeframe, and how effectiveness will be verified. No headings, no bullets, no preamble.",
+      `INCIDENT: ${state.meta.title||"-"} — ${state.meta.desc||"-"}\nCAUSAL FACTOR: ${cf?cf.text:"-"}\nRELATED CONDITIONS: ${conds||"-"}\nROOT CAUSE (tree path): ${a.rc}\nEXISTING DRAFT (improve or replace): ${a.action||"(none)"}`,
+      260)).trim();
+    aiSuggestions[id]=txt;
+    box.innerHTML=`<div style="background:#f6f1ff;border:1px solid #ddd0f0;border-radius:6px;padding:6px 8px;margin-top:4px;font-size:12px">🤖 ${esc(txt)}
+      <div class="flex" style="margin-top:5px">
+        <button class="btn small primary" onclick="useSuggestion('${id}')">✓ Use this</button>
+        <button class="btn small" onclick="document.getElementById('ai-sg-${id}').innerHTML=''">Dismiss</button>
+      </div></div>`;
+  }catch(e){ box.innerHTML='<span class="ai-err" style="font-size:11px">'+esc(e.message)+'</span>'; }
+}
+function useSuggestion(id){
+  const a=state.actions.find(x=>x.id===id); if(!a||!aiSuggestions[id]) return;
+  a.action=aiSuggestions[id]; save(); renderCA();
+}
+async function aiConsolidate(){
+  if(!getAI().key){ openAISettings(); return; }
+  const out=document.getElementById("ai-out-cons");
+  out.classList.add("show"); out.innerHTML='<span class="muted">⏳ analyzing all corrective actions for overlap…</span>';
+  const btn=document.getElementById("ai-btn-cons"); if(btn) btn.disabled=true;
+  try{
+    const txt=await aiCall(
+      'You consolidate corrective-action lists from incident investigations. Group actions that are similar, overlapping, or better executed as one initiative. Reply with STRICT JSON only (no markdown fences): {"groups":[{"title":"short name","action":"one consolidated SMARTER action text that fully covers the grouped items","covers":[row numbers]}],"standalone":[row numbers],"summary":"1-2 sentence overview"}. Every row number must appear exactly once across groups and standalone. Only group rows that genuinely belong together; if nothing overlaps, return empty groups and all rows standalone.',
+      "CORRECTIVE ACTIONS LIST:\n"+actionsText()+"\n\nINCIDENT: "+(state.meta.title||"-")+" — "+(state.meta.desc||"-"),
+      900);
+    let plan=null;
+    try{ plan=JSON.parse(txt.replace(/^\s*```json?\s*/i,"").replace(/```\s*$/,"")); }catch(e){}
+    if(!plan||!Array.isArray(plan.groups)){ out.innerHTML=mdLite(txt); return; }
+    window._consPlan=plan;
+    if(!plan.groups.length){
+      out.innerHTML='<b>No overlapping actions found</b> — each corrective action addresses a distinct root cause. '+esc(plan.summary||"");
+      return;
+    }
+    out.innerHTML = `<h4>Proposed consolidation</h4><p class="muted" style="font-size:12px">${esc(plan.summary||"")}</p>` +
+      plan.groups.map((g,gi)=>`<div style="border:1px solid #e0d6f2;border-radius:7px;padding:8px 10px;margin:6px 0;background:#faf7ff">
+        <b>CA-G${gi+1}: ${esc(g.title||("Group "+(gi+1)))}</b> <span class="muted" style="font-size:11px">(combines rows ${(g.covers||[]).join(", ")})</span><br>
+        <span style="font-size:12.5px">${esc(g.action||"")}</span></div>`).join("") +
+      ((plan.standalone&&plan.standalone.length)?`<p class="muted" style="font-size:12px">Kept as-is (rows): ${plan.standalone.join(", ")}</p>`:"") +
+      `<div class="flex" style="margin-top:8px"><button class="btn primary" onclick="applyConsolidation()">✓ Apply — write consolidated text into the covered rows</button></div>
+       <div class="muted" style="font-size:11px;margin-top:6px">Each covered row receives the consolidated action text tagged CA-G#, so every root cause stays covered and traceable. Assign one owner &amp; due date per group.</div>`;
+  }catch(e){ out.innerHTML='<span class="ai-err">'+esc(e.message)+'</span>'; }
+  finally{ if(btn) btn.disabled=false; }
+}
+function applyConsolidation(){
+  const plan=window._consPlan; if(!plan) return;
+  plan.groups.forEach((g,gi)=>{
+    (g.covers||[]).forEach(n=>{
+      const a=state.actions[n-1];
+      if(a) a.action="[CA-G"+(gi+1)+"] "+(g.action||"");
+    });
+  });
+  save(); renderCA();
+  const out=document.getElementById("ai-out-cons");
+  out.classList.add("show");
+  out.innerHTML='<b style="color:var(--ok)">✓ Consolidation applied.</b> <span class="muted" style="font-size:12px">Rows sharing the same CA-G tag are now one combined action — give each group a single owner and due date.</span>';
 }
 
 /* ================= boot ================= */
