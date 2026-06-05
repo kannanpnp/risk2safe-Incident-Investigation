@@ -1,88 +1,77 @@
-# risk2safe-Incident-Investigation
 # 🛡️ Risk2Safe — Incident Investigation Workbench
 
 A **single-file web application** for safety professionals to conduct structured incident
-investigations: build a **SnapCharT®-style timeline**, identify **Causal Factors**, drill into
-**root causes** with the full guided questionnaire (7 Basic Cause Categories + Equipment
-Difficulty + the 15-Question Human Performance Troubleshooting Guide), develop **SMARTER
-corrective actions**, and print a complete **investigation report** — with optional **AI review
-at every step** powered by your own OpenAI API key.
+investigations: build a **SnapCharT®-style timeline**, identify **Causal Factors** with
+**barrier/safeguard analysis**, drill into **root causes** with the full guided questionnaire
+(7 Basic Cause Categories + Equipment Difficulty + the 15-Question Human Performance
+Troubleshooting Guide), classify human factors with **DoD HFACS 8.0** (active vs latent
+failures), develop **SMARTER corrective actions** (with per-row AI suggestions, AI
+consolidation, and Excel export), and produce a formal 8-section **investigation report** —
+with optional **AI review at every step** powered by your own OpenAI API key.
 
 > Methodology concepts referenced: SnapCharT®, Root Cause Tree®, TapRooT® are registered
-> trademarks of System Improvements, Inc. This tool is an independent aid for internal use —
-> refer to the official TapRooT® books and training for authoritative guidance.
+> trademarks of System Improvements, Inc. DoD HFACS 8.0 per U.S. Department of Defense
+> documentation. This tool is an independent aid for internal use — refer to the official
+> sources and training for authoritative guidance.
 
 ---
 
-## ✨ Features
+## ✨ Workflow (7 color-coded tabs)
 
-| Step | Tab (own color) | What you do |
-|------|------------------|-------------|
-| 1 | **Plan** (teal) | Incident facts, evidence preservation list, interview plan |
-| 2 | **SnapCharT®** (blue) | Timeline of Events (rectangles) before & after the Incident (circle), with Conditions (ovals) attached; dashed = unproven info |
-| 3 | **Causal Factors** (orange) | Mark problems, apply the 4-Step "So what?" method, promote the true big-picture errors to ▲ CFs |
-| 4 | **Root Causes** (purple) | Per CF: Level-1 classification → 15 Questions (auto-recommends categories) → near-root causes → root causes, with dictionary-style yes/no questions at every node |
-| 5 | **Corrective Actions** (green) | A row auto-appears per selected root cause; SMARTER guidance, owner / due date / status tracking |
-| 6 | **Report** (slate) | One-click formatted report; print or save as PDF |
+| # | Tab | What you do |
+|---|------|-------------|
+| 1 | **Plan** (teal) | Incident facts, evidence preservation, interview plan |
+| 2 | **SnapCharT®** (blue) | Timeline of Events before & after the Incident, Conditions attached, dashed = unproven |
+| 3 | **Causal Factors** (orange) | Mark problems, 4-Step "So what?" method, promote to ▲ CFs **+ Barrier analysis** (failed / not present / success) |
+| 4 | **Root Causes** (purple) | Per CF: Level-1 → 15 Questions → categories → near-root → root causes with dictionary questions |
+| 5 | **HFACS** (raspberry) | DoD HFACS 8.0: Unsafe Acts (active failures) → Preconditions → Supervision → Organizational influences (latent failures), 100 nanocodes with definitions |
+| 6 | **Corrective Actions** (green) | Auto row per root cause, per-row 🤖 AI Suggest, AI Consolidate similar actions, ⬇ Excel tracker download |
+| 7 | **Report** (slate) | Formal report; print or save as PDF |
 
-Plus: multiple investigations, auto-save in the browser (localStorage), JSON export/import
-to share or back up investigations, and 🤖 **AI Review** buttons on every tab.
+## 📑 Report format
+
+1. Executive Summary *(editable + AI draft)*
+2. Incident Details
+3. Incident Findings (sequence of events & problems)
+4. Barrier Analysis — failed / not present / success
+5. Active and Latent Failures (DoD HFACS 8.0)
+6. Root Causes
+7. Recommended Actions
+8. Sustainability Analysis of the Recommendations *(editable + AI draft)*
 
 ## 🚀 Launch on GitHub Pages (free hosting)
 
-1. Create a new repository on [github.com](https://github.com) (e.g. `risk2safe`).
-2. Upload **`index.html`** and **`README.md`** to the repository root
-   (*Add file → Upload files → Commit*).
-3. Open **Settings → Pages**.
-4. Under *Build and deployment*: Source = **Deploy from a branch**,
-   Branch = **main**, Folder = **/(root)** → **Save**.
-5. After ~1 minute your app is live at:
-   `https://<your-username>.github.io/risk2safe/`
+1. Create a repository on github.com (e.g. `risk2safe`).
+2. Upload **`index.html`** and **`README.md`** to the repository root.
+3. **Settings → Pages** → Source: *Deploy from a branch* → Branch **main**, folder **/(root)** → Save.
+4. Your app goes live at `https://<your-username>.github.io/risk2safe/` in ~1 minute.
 
-No build step, no dependencies, no server code — `index.html` is the whole application.
+Runs locally too — just open `index.html` in a browser. Everything works offline except the
+AI features and the first Excel download (loads the SheetJS engine from CDN; falls back to CSV offline).
 
-### Run locally instead
-Just double-click `index.html` — it works fully offline.
-(For the AI features some browsers prefer the page to be served over http(s);
-GitHub Pages, or `python -m http.server` in the folder, both work.)
+## 🤖 AI features (optional — bring your own OpenAI key)
 
-## 🤖 AI Review setup (optional)
+Click **🤖 AI setup** → paste an API key from platform.openai.com (billing enabled).
+Default model `gpt-4o-mini`. The key lives only in your browser's localStorage and is sent
+only to api.openai.com.
 
-1. Get an API key at **platform.openai.com → API keys** (the account needs billing/credits).
-2. In the app, click **🤖 AI setup** in the top bar, paste the key, choose a model
-   (default `gpt-4o-mini` — cheap and good), **Save**.
-3. Click any **AI Review** button:
-   - **Plan** — completeness of facts, evidence & interview plan
-   - **SnapCharT®** — timeline gaps, missing Events/Conditions, wording, what to verify
-   - **Causal Factors** — are the right big-picture CFs marked? Any missed?
-   - **Root Causes** — are 15-Question answers & selected root causes consistent with the evidence?
-   - **Corrective Actions** — SMARTER check + stronger fixes up the hierarchy of controls
-   - **Report** — end-to-end consistency check + draft executive summary
+- **AI Review** buttons on all 7 tabs (plan completeness, SnapCharT gaps, CF selection,
+  root-cause consistency, HFACS tier coverage, SMARTER scoring, end-to-end report check)
+- **Per-row action suggestions** and **consolidation of similar actions** in tab 6
+- **AI draft** buttons for the Executive Summary and the Sustainability Analysis in tab 7
 
-**Privacy & security notes**
+⚠️ Investigation text is included in AI prompts — don't use AI features for incidents whose
+details may not leave your organization. AI output is advisory; the investigator owns all
+conclusions. Never commit your API key to the repository.
 
-- The key is stored **only in your browser** (localStorage) and sent **only to `api.openai.com`**.
-- The investigation text is included in the AI prompt — don't use AI review for incidents
-  whose details must not leave your organization.
-- AI output is **advisory only**; the investigator owns all conclusions.
-- Never commit your API key to the repository.
+## 💾 Data
 
-## 💾 Data & backup
-
-- Work auto-saves in the browser you're using (per device, per browser).
-- Use **Export** to download an investigation as a `.risk2safe.json` file and
-  **Import** to load it on another machine — also your backup mechanism.
-- Clearing browser site data erases saved investigations: export anything important.
+Auto-saves in the browser (per device). **Export/Import** JSON for backup and sharing.
+**⬇ Download Excel tracker** exports the corrective-action register as `.xlsx`.
 
 ## 📁 Repository contents
 
 ```
-index.html   ← the entire application (open this / deploy this)
+index.html   ← the entire application
 README.md    ← this file
 ```
-
-## ⚠️ Disclaimer
-
-This tool supports — but does not replace — competent investigation practice and formal
-training. Verify all findings against the facts. SnapCharT®, Root Cause Tree®, and TapRooT®
-are registered trademarks of System Improvements, Inc., Knoxville, TN.
