@@ -48,21 +48,24 @@ body.theme-0{--brand:#0d5c63;--brand2:#0a4a50;--bg:#e9f4f4}
 body.theme-1{--brand:#1f5fa8;--brand2:#174a85;--bg:#eaf1fb}
 body.theme-2{--brand:#c2611a;--brand2:#9d4d12;--bg:#fdf1e6}
 body.theme-3{--brand:#6a3fa0;--brand2:#553283;--bg:#f3edfb}
-body.theme-4{--brand:#2e7d4f;--brand2:#24633e;--bg:#eaf6ef}
-body.theme-5{--brand:#44546a;--brand2:#364455;--bg:#eef1f5}
+body.theme-4{--brand:#b3446c;--brand2:#933655;--bg:#fbeef3}
+body.theme-5{--brand:#2e7d4f;--brand2:#24633e;--bg:#eaf6ef}
+body.theme-6{--brand:#44546a;--brand2:#364455;--bg:#eef1f5}
 header.appbar{transition:background .25s}
 nav.steps button[data-step="0"] .num{background:#0d5c63}
 nav.steps button[data-step="1"] .num{background:#1f5fa8}
 nav.steps button[data-step="2"] .num{background:#c2611a}
 nav.steps button[data-step="3"] .num{background:#6a3fa0}
-nav.steps button[data-step="4"] .num{background:#2e7d4f}
-nav.steps button[data-step="5"] .num{background:#44546a}
+nav.steps button[data-step="4"] .num{background:#b3446c}
+nav.steps button[data-step="5"] .num{background:#2e7d4f}
+nav.steps button[data-step="6"] .num{background:#44546a}
 nav.steps button[data-step="0"].active{color:#0d5c63;border-bottom-color:#0d5c63}
 nav.steps button[data-step="1"].active{color:#1f5fa8;border-bottom-color:#1f5fa8}
 nav.steps button[data-step="2"].active{color:#c2611a;border-bottom-color:#c2611a}
 nav.steps button[data-step="3"].active{color:#6a3fa0;border-bottom-color:#6a3fa0}
-nav.steps button[data-step="4"].active{color:#2e7d4f;border-bottom-color:#2e7d4f}
-nav.steps button[data-step="5"].active{color:#44546a;border-bottom-color:#44546a}
+nav.steps button[data-step="4"].active{color:#b3446c;border-bottom-color:#b3446c}
+nav.steps button[data-step="5"].active{color:#2e7d4f;border-bottom-color:#2e7d4f}
+nav.steps button[data-step="6"].active{color:#44546a;border-bottom-color:#44546a}
 nav.steps button.active .num{background:var(--accent);color:#222}
 /* ---------- AI review ---------- */
 .ai-block{margin-top:16px;border:1.5px dashed #b8a6d9;border-radius:10px;padding:12px;background:linear-gradient(135deg,#faf7ff,#f3f8ff)}
@@ -208,8 +211,9 @@ footer{padding:14px;text-align:center;color:var(--muted);font-size:11px}
   <button data-step="1"><span class="num">2</span>SnapCharT®</button>
   <button data-step="2"><span class="num">3</span>Causal Factors</button>
   <button data-step="3"><span class="num">4</span>Root Causes</button>
-  <button data-step="4"><span class="num">5</span>Corrective Actions</button>
-  <button data-step="5"><span class="num">6</span>Report</button>
+  <button data-step="4"><span class="num">5</span>HFACS</button>
+  <button data-step="5"><span class="num">6</span>Corrective Actions</button>
+  <button data-step="6"><span class="num">7</span>Report</button>
 </nav>
 
 <main>
@@ -283,6 +287,9 @@ footer{padding:14px;text-align:center;color:var(--muted);font-size:11px}
     <div class="hint"><b>The 4-Step Method:</b> ① Identify <i>all</i> problems on the SnapCharT® (big and small — use the “problem?” toggle on each shape). ② Group related Conditions near the Event they impact. ③ Use the <b>“So what?”</b> method — start with each problem and ask “so what resulted from that?” until you reach an Event or the Incident. ④ The Causal Factor is that first Event or one–two “so whats” back: <i>Who did what wrong?</i> or <i>What equipment failed or didn’t work as intended?</i> Mark it with the ▲ triangle on the chart.</div>
     <div id="cf-problem-list"></div>
     <div id="cf-confirmed"></div>
+    <h3>Safeguard / Barrier analysis</h3>
+    <p class="muted" style="font-size:12.5px">List the barriers/safeguards that stood between the hazard and the people/assets. Status: <b>Failed</b> (existed but did not work), <b>Not present</b> (should have existed), <b>Success</b> (worked and limited the consequences). Each failed or missing barrier usually points to a Causal Factor — and feeds section 4 of the report.</p>
+    <div id="barrier-panel"></div>
     <div class="ai-block no-print"><div class="ai-head">
       <button class="btn ai" id="ai-btn-2" onclick="aiReview(2)">🤖 AI Review — causal factors</button>
       <span class="ai-tag">checks the 4-Step Method: are these the right big-picture CFs? Any missed?</span></div>
@@ -307,28 +314,52 @@ footer{padding:14px;text-align:center;color:var(--muted);font-size:11px}
   </div>
 </section>
 
-<!-- STEP 4 : CORRECTIVE ACTIONS -->
+<!-- STEP 4 : HFACS -->
 <section class="step-page" id="page-4" style="display:none">
+  <div class="panel">
+    <h2>Step 4b — Human Factors analysis (DoD HFACS 8.0)</h2>
+    <p class="muted">For each <b>human-error</b> Causal Factor, classify the contributing human factors across the four HFACS tiers: <b>Unsafe Acts</b> (active failures — the last actions/inactions before the mishap) → <b>Preconditions</b> → <b>Supervisory/Leadership influences</b> → <b>Organizational influences</b> (latent failures that lay dormant in the system). HFACS expects <b>at least one Precondition for every Unsafe Act</b>. Selections feed the “Active and Latent failures” section of the report.</p>
+    <div class="flex" style="margin-bottom:12px">
+      <label style="font-weight:600">Causal Factor under analysis:</label>
+      <select id="hfacs-cf-select" style="min-width:320px" onchange="renderHFACS()"></select>
+    </div>
+    <div id="hfacs-body"></div>
+    <div class="ai-block no-print"><div class="ai-head">
+      <button class="btn ai" id="ai-btn-4" onclick="aiReview(4)">🤖 AI Review — HFACS classification</button>
+      <span class="ai-tag">checks tier coverage &amp; suggests applicable nanocodes from the evidence</span></div>
+      <div class="ai-out" id="ai-out-4"></div></div>
+  </div>
+</section>
+
+<!-- STEP 5 : CORRECTIVE ACTIONS -->
+<section class="step-page" id="page-5" style="display:none">
   <div class="panel">
     <h2>Step 5 — Develop &amp; track Corrective Actions</h2>
     <p class="muted">Develop a fix for <b>every root cause</b>. Test each action against <b>SMARTER</b>: <b>S</b>pecific, <b>M</b>easurable, <b>A</b>ccountable, <b>R</b>easonable, <b>T</b>imely, <b>E</b>ffective, <b>R</b>eviewed. Prefer fixes that remove the hazard or improve the system over “re-train and remind”.</p>
     <div id="ca-body"></div>
     <div class="ai-block no-print"><div class="ai-head">
-      <button class="btn ai" id="ai-btn-4" onclick="aiReview(4)">🤖 AI Review — corrective actions</button>
+      <button class="btn ai" id="ai-btn-5" onclick="aiReview(5)">🤖 AI Review — corrective actions</button>
       <span class="ai-tag">SMARTER test for each action + stronger fixes up the hierarchy of controls</span></div>
-      <div class="ai-out" id="ai-out-4"></div></div>
+      <div class="ai-out" id="ai-out-5"></div></div>
   </div>
 </section>
 
 <!-- STEP 5 : REPORT -->
-<section class="step-page" id="page-5" style="display:none">
+<section class="step-page" id="page-6" style="display:none">
   <div class="no-print" style="max-width:980px;margin:0 auto 10px;display:flex;gap:8px;justify-content:flex-end;align-items:center">
     <button class="btn primary" onclick="buildReport();window.print()">🖨 Print / Save as PDF</button>
   </div>
+  <div class="panel no-print" style="max-width:980px;margin:0 auto 12px">
+    <h3 style="margin-top:0">Executive Summary <button class="btn small ai" onclick="aiDraftField('execSummary',this)">🤖 AI draft</button></h3>
+    <textarea id="ed-exec" rows="4" style="width:100%" placeholder="What happened, why, the key root causes and latent failures, and what will change." oninput="state.meta.execSummary=this.value;save()"></textarea>
+    <h3>Sustainability analysis of the recommendations <button class="btn small ai" onclick="aiDraftField('sustain',this)">🤖 AI draft</button></h3>
+    <textarea id="ed-sustain" rows="4" style="width:100%" placeholder="How will each recommendation be sustained? Control strength, ownership, verification cycle, audits/trending, management review." oninput="state.meta.sustain=this.value;save()"></textarea>
+    <div class="muted" style="font-size:11.5px;margin-top:4px">Saved with the investigation and printed into sections 1 and 8 of the report.</div>
+  </div>
   <div class="ai-block no-print" style="max-width:980px;margin:0 auto 12px"><div class="ai-head">
-    <button class="btn ai" id="ai-btn-5" onclick="aiReview(5)">🤖 AI Review — full report</button>
+    <button class="btn ai" id="ai-btn-6" onclick="aiReview(6)">🤖 AI Review — full report</button>
     <span class="ai-tag">end-to-end consistency check + drafts an executive summary you can paste in</span></div>
-    <div class="ai-out" id="ai-out-5"></div></div>
+    <div class="ai-out" id="ai-out-6"></div></div>
   <div id="report-out"></div>
 </section>
 </main>
@@ -679,6 +710,649 @@ const LEVEL1 = [
 ];
 </script>
 <script>
+/* DoD HFACS version 8.0 taxonomy (condensed from the official document) */
+const HFACS = {
+ "tiers": [
+  {
+   "key": "ACTS",
+   "name": "Unsafe Acts (Active Failures)",
+   "failure": "active",
+   "cats": [
+    {
+     "code": "AE100",
+     "name": "Performance / Skill-Based Errors",
+     "codes": [
+      {
+       "code": "AE101",
+       "name": "Unintended Activation or Deactivation",
+       "def": "is when  an individual’s movements inadvertently activated or deactivated equipment, controls, switches, weapons systems, etc., when there is no intent to do so and resulted in the near-miss or mishap"
+      },
+      {
+       "code": "AE102",
+       "name": "Procedure or Checklist Not Followed Correctly",
+       "def": "is when  the mishap individual did not follow correct procedure which resulted in the near-miss or mishap"
+      },
+      {
+       "code": "AE104",
+       "name": "Over-Controlled/Under-Controlled Aircraft/Vehicle/Vessel or System",
+       "def": "is when  the mishap individual(s) inappropriately reacted to conditions by either over- or under-controlling the aircraft/vehicle/vessel/system, which resulted in the near-miss or mishap"
+      },
+      {
+       "code": "AE105",
+       "name": "Breakdown in Visual Scan or Instrument Cross-check",
+       "def": "is when  the mishap individual did not effectively execute learned/practiced internal or external visual scan patterns, which resulted in the near-miss or mishap"
+      },
+      {
+       "code": "AE107",
+       "name": "Rushed or Delayed a Necessary Action",
+       "def": "is when  the mishap individual took the correct action(s) as dictated by the situation but performed the action(s) either too quickly or too slowly, which resulted in the near-miss or mishap"
+      },
+      {
+       "code": "AE108",
+       "name": "Misinterpreted/Misread Instrument",
+       "def": "is when  the individual misread, misinterpreted, or failed to recognize the significance of an accurate instrument reading, resulting in the near miss or mishap"
+      }
+     ]
+    },
+    {
+     "code": "AE200",
+     "name": "Judgment & Decision-Making Errors",
+     "codes": [
+      {
+       "code": "AE201",
+       "name": "Inadequate Real-Time Risk Assessment/Action",
+       "def": "is when  the mishap individual, through inexperience, faulty logic, poor judgment, or insufficient information, selected or proceeded with the wrong course of action based on an ineffective real-time assessment of immediate hazards during execution of a task/mission/activity, which resulted in the n"
+      },
+      {
+       "code": "AE202",
+       "name": "Ineffective Task Prioritization",
+       "def": "is when  the mishap individual did not effectively organize and accomplish the tasks required to manage a situation, which resulted in the nearmiss or mishap"
+      },
+      {
+       "code": "AE205",
+       "name": "Ignored a Caution/Warning",
+       "def": "is when  the mishap individual disregarded an accurately perceived and understood caution or warning in favor of addressing what they perceive to be a greater immediate threat, which resulted in the near-miss or mishap"
+      },
+      {
+       "code": "AE207",
+       "name": "Misjudged/Misperceived Changing Environment",
+       "def": "is when  an individual misperceived or misjudged altitude, separation, clearance, speed, closure rate, road or sea conditions, aircraft/vehicle location within the performance envelope or other operational conditions, which resulted in a near miss or mishap"
+      }
+     ]
+    },
+    {
+     "code": "AD000",
+     "name": "Known Deviations (Violations)",
+     "codes": [
+      {
+       "code": "AD001",
+       "name": "Performed Known Deviation (Work-Around)",
+       "def": "is when  the mishap individual disregarded published policy/guidance/procedure in order to pursue what he/she believed to be the best course of action based on available information to make a real-time risk decision, which resulted in the near-miss or mishap"
+      },
+      {
+       "code": "AD002",
+       "name": "Commits Routine/Widespread Known Deviation (Normalization of Deviance)",
+       "def": "is when  the mishap individual violated a published standard, procedure or policy based on unofficial accepted practices of the unit or community that are routine, ongoing or widespread and resulted in the near-miss or mishap"
+      },
+      {
+       "code": "AD003",
+       "name": "Extreme Lack of Discipline (Indiscipline)",
+       "def": "is when  an individual was trained to standard, knows the standard, but elected not to follow the standard without cause or need, which resulted in a near-miss or mishap"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "PRE",
+   "name": "Preconditions to Unsafe Acts (Active or Latent)",
+   "failure": "latent",
+   "cats": [
+    {
+     "code": "PC100",
+     "name": "Mental Awareness Conditions",
+     "codes": [
+      {
+       "code": "PC101",
+       "name": "Inattention",
+       "def": "is when  the mishap individual did not maintain a state of readiness or alertness/situational awareness to properly act upon available information, resulting in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PC102",
+       "name": "Fixation (Channelized Attention)",
+       "def": "is when  the individual focused all conscious attention on a limited number of environmental cues to the exclusion of others, which resulted in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PC103",
+       "name": "Task Saturation",
+       "def": "is when  the quantity of information an individual was processing exceeded his or her mental resources in the amount of time available and resulted in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PC104",
+       "name": "Confusion",
+       "def": "is when  the mishap individual was unable to maintain a cohesive, orderly awareness of events and required actions and experienced a state characterized by a lack of 8 Encl (1) U.S"
+      },
+      {
+       "code": "PC105",
+       "name": "Negative Habit Transfer",
+       "def": "is when  the individual reverted to a highly learned behavior used in a previous system or situation and that was inappropriate for current task demands, resulting in a hazardous condition or in unsafe act"
+      },
+      {
+       "code": "PC106",
+       "name": "Distraction/Interruption",
+       "def": "is when  the individual had an interruption of attention or inappropriate redirection of attention by either an environmental cue, technology, a mental process, or other human influence, which resulted in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PC107",
+       "name": "Geographically Lost",
+       "def": "is when  the individual was at a different location from where the individual believed he or she was"
+      },
+      {
+       "code": "PC110",
+       "name": "Change Blindness/Inaccurate Expectation",
+       "def": "is when  an individual’s expectations contributed to not perceiving the change or to false interpretation of perceived stimuli"
+      }
+     ]
+    },
+    {
+     "code": "PC200",
+     "name": "State of Mind Conditions",
+     "codes": [
+      {
+       "code": "PC202",
+       "name": "Psychological Disorder",
+       "def": "is when  the individual has met criteria for a diagnosable psychiatric disorder by a competent medical professional which, in the medical professional’s opinion, resulted in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PC203",
+       "name": "Life Stressors/Emotional State",
+       "def": "is when  the individual’s emotional state and/or life circumstances led to burnout or otherwise degrade performance, which resulted in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PC205",
+       "name": "Personality Style",
+       "def": "is when  evidence strongly indicates the individual’s personal interaction with other personalities created a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PC206",
+       "name": "Overconfidence",
+       "def": "is when  the individual unreasonably overvalued or overestimated his or her own capability, the capability of others or the capability of aircraft/vehicle/vessel or equipment, which resulted in hazardous conditions or unsafe act"
+      },
+      {
+       "code": "PC209",
+       "name": "Pressing, Haste, Motivation",
+       "def": "is when  the individual’s motivation to complete a task/mission was misplaced, and/or the individual knowingly pressed him or herself and/or equipment beyond reasonable capabilities, which resulted in a hazardous condition or unsafe act"
+      }
+     ]
+    },
+    {
+     "code": "PC300",
+     "name": "Adverse Physiological Conditions",
+     "codes": [
+      {
+       "code": "PC301",
+       "name": "Effects of Gravitational Forces (G-LOC)",
+       "def": "is when, in aviation, the individual experienced G-induced loss of consciousness (G-LOC), grey-out, blackout or other neuro-circulatory effects of sustained acceleration forces."
+      },
+      {
+       "code": "PC302",
+       "name": "Substance Effects (supplements, medications, drugs, alcohol)",
+       "def": "is when  the use of authorized or unauthorized substances (medications, supplements, energy enhancing products, alcohol, illegal drugs, etc.) negatively affected performance and resulted in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PC304",
+       "name": "Loss of Consciousness (sudden or prolonged onset)",
+       "def": "is when  the individual experienced a loss of consciousness/functional capacity for a few seconds or prolonged and resulted in degraded performance"
+      },
+      {
+       "code": "PC305",
+       "name": "Physical Illness/Injury",
+       "def": "is when  pre-existing or operationally-related medical conditions (illness, injury, dehydration, motion sickness, trauma, seizure, toxic chemical exposure, etc.) negatively affected performance and resulted in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PC306",
+       "name": "Physical Overexertion",
+       "def": "is when  the individual’s diminished physical capability caused by overuse (time/relative load) resulted in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PC307",
+       "name": "Fatigue",
+       "def": "is when  acute or chronic sleep deprivation or circadian rhythm disruption (shift work/lag, extended duty periods, jet lag, poor sleeping conditions, etc.) negatively affected physical and/or mental performance and resulted in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PC310",
+       "name": "Acute Trapped Gas Disorders",
+       "def": "is when  gasses in the middle ear, sinuses, teeth or gastrointestinal system negatively affected performance and resulted in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PC311",
+       "name": "Decompression Sickness (Evolved Gas Disorder)",
+       "def": "is when  evolved gases negatively affected performance, resulting in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PC312",
+       "name": "Respiratory Physiological Event",
+       "def": "is when  hindered/inappropriate respiration or pressure/flow/concentration of oxygen created respiratory physiological symptoms which negatively affected performance resulting in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PC314",
+       "name": "Inadequate Adaptation to Darkness",
+       "def": "is when  dark-adaptation was either not fully completed or was washed out, negatively affected the individual’s performance, and resulted in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PC317",
+       "name": "Anthropometric/Biomechanical Limitations",
+       "def": "is when  the individual's size, strength, dexterity, coordination, endurance, or other physical factors negatively affected performance, which resulted in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PC319",
+       "name": "Nutrition/Diet",
+       "def": "is when  evidence supports that the individual’s nutritional state negatively affected performance"
+      },
+      {
+       "code": "PC320",
+       "name": "Loss of Capacity (Surprise/Startle Response)",
+       "def": "is when  uncontrollable, automatic physical response of muscle reflex, raised heart rate, suddenly dropped blood pressure, etc. was elicited by exposure to a sudden, intense event that contradicts an individual’s expectations resulting in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PC321",
+       "name": "Spatial Disorientation",
+       "def": "is when  the individual failed to sense correctly a position, motion, or attitude of the aircraft or his/herself within the fixed coordinate system provided by the surface of the earth and the gravitational vertical position (e.g. visual, vestibular, kinesthetic, or auditory/sound illusions), which "
+      }
+     ]
+    },
+    {
+     "code": "PE100",
+     "name": "Physical Environment",
+     "codes": [
+      {
+       "code": "PE101",
+       "name": "Environmental Conditions Affected Vision",
+       "def": "is when  conditions such as lighting/illumination, physical obstructions, rain, snow, spray, fog, haze, darkness, smoke, dust, sand, other particulates, etc., impeded clear viewing/vision, negatively affected performance, and resulted in hazardous conditions or unsafe acts"
+      },
+      {
+       "code": "PE103",
+       "name": "Vibration Affected Performance",
+       "def": "is when  the intensity and/or duration of vibrations from an engine, equipment, tools, airframe, rotor, and/or propeller negatively affected vision, balance, and/or performance, and resulted in hazardous conditions or unsafe acts"
+      },
+      {
+       "code": "PE106",
+       "name": "Temperature Affected Performance",
+       "def": "is when  the ambient/workspace temperature negatively affected performance and resulted in hazardous conditions or unsafe act"
+      },
+      {
+       "code": "PE108",
+       "name": "External Force or Object Impeded Performance",
+       "def": "is when  accelerative forces, wind, sea-state, objects, aircraft/vehicle/vessel structures, etc. impeded individual movement and resulted in hazardous conditions or unsafe acts"
+      },
+      {
+       "code": "PE109",
+       "name": "External Lighting of Vehicle/Aircraft/Vessel/Object Affected Vision",
+       "def": "is when  the intensity, position, pattern, color, and/or absence of the lighting of other aircraft, vehicles, vessels, or objects negatively affected performance and resulted in hazardous conditions or unsafe acts"
+      },
+      {
+       "code": "PE110",
+       "name": "Noise Interference",
+       "def": "is when  an unexpected sound not directly related to information needed for a task (bang, explosion, shout, alarm, machine noise, etc.) negatively affected performance and resulted in hazardous conditions or unsafe acts"
+      },
+      {
+       "code": "PE112",
+       "name": "Terrain Feature Affected Performance",
+       "def": "is when  known yet unanticipated or unseen/unknown terrain hazards were encountered, which negatively affected performance and resulted in hazardous conditions or unsafe acts"
+      },
+      {
+       "code": "PE113",
+       "name": "Animal or Non-DoD affiliated Human",
+       "def": "is when  the actions of a non-DoD affiliated civilian or an animal resulted in a reportable/recordable DoD mishap IAW DoDI 6055.07"
+      }
+     ]
+    },
+    {
+     "code": "PE200",
+     "name": "Technological Environment",
+     "codes": [
+      {
+       "code": "PE201",
+       "name": "Restraint System and/or Seat Problems",
+       "def": "is when  the design of a restraint system, seat, ejection system, and/or associated comfort element impeded occupant performance or failed to function as intended, which resulted in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PE202",
+       "name": "Instrumentation and Warning System Issues",
+       "def": "is when  workspace/cockpit instrument or warning system elements (design, reliability, lighting/backlighting, audible cues, location, symbology, size, display, etc.) negatively affected performance, which resulted in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PE203",
+       "name": "Workspace Visibility Restrictions (not weather related)",
+       "def": "is when  obstructions from workspace design/layout prevented necessary visibility and negatively affected performance, resulting in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PE204",
+       "name": "Controls and/or Switches",
+       "def": "is when  the location, shape, size, design, reliability, or other aspect of controls and/or switches negatively affected performance and resulted in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PE205",
+       "name": "Automated System Created a Hazardous Condition",
+       "def": "is when  the design, function, reliability, symbology, logic or other aspects of automated systems negatively affected performance, which resulted in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PE206",
+       "name": "Workspace Limitations Affected Performance",
+       "def": "is when  conditions of a workspace configuration/design negatively affected performance, which resulted in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PE207",
+       "name": "Personal Equipment Interference",
+       "def": "is when  the individual’s personal equipment negatively affected performance and resulted in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PE208",
+       "name": "Communication Equipment Ineffective",
+       "def": "is when  a communication system’s (voice, data, multi-sensory) limitations and/or malfunctions negatively affected performance and resulted in a hazardous condition or unsafe act"
+      }
+     ]
+    },
+    {
+     "code": "PP100",
+     "name": "Team Coordination / Communication",
+     "codes": [
+      {
+       "code": "PP101",
+       "name": "Ineffective Team Resource Management (Crew, Bridge, Fighter, Maintenance, etc.)",
+       "def": "is when  crew/team members failed to actively maintain an accurate and shared understanding of the evolving task, or manage their distribution of tasks, which resulted in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PP109",
+       "name": "Task/Mission Planning and/or Briefing Inadequate",
+       "def": "is when  an individual, crew or team failed to complete all preparatory tasks associated with planning the mission and/or effective briefing the tasks, which resulted in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PP111",
+       "name": "Task/Mission-In-Progress Re-Planning",
+       "def": "is when  crew or team members failed to adequately reassess changes in their dynamic environment during mission execution and change their mission plan accordingly to ensure adequate management of risk, which resulted in a hazardous condition or unsafe act. 16 Encl (1) U.S"
+      }
+     ]
+    },
+    {
+     "code": "PT100",
+     "name": "Training Conditions",
+     "codes": [
+      {
+       "code": "PT101",
+       "name": "Untrained Operator/Worker",
+       "def": "is when  the mishap individual did not receive adequate/sufficient training (formal, just-in-time, on the job, etc.) or received no training for a specific task, which resulted in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PT102",
+       "name": "Knowledge Retention",
+       "def": "is when  the mishap person did not remember information from training and/or previous experience necessary to complete a task safely, which resulted in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PT103",
+       "name": "Lack of Currency",
+       "def": "is when  an individual’s familiarity with a specific task or process was either not current or was limited by infrequent or rare performance of the task to permit safe execution, which resulted in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PT104",
+       "name": "Lack of Proficiency/Experience",
+       "def": "is when  an individual’s level of fluency or expertise did not match skills required for safe execution, regardless of his or her familiarity with the process, task, system or mission, which resulted in a hazardous condition or unsafe act"
+      },
+      {
+       "code": "PT105",
+       "name": "Lack of Job/Work Related Safety Training",
+       "def": "is when  an individual had not received required or effective safety training related to hazards associated with their daily job or a onetime task, or when there was a change in process or equipment, which resulted in a hazardous condition or unsafe act. 17 Encl (1) U.S"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "SUP",
+   "name": "Supervisory / Leadership Influences (Latent Failures)",
+   "failure": "latent",
+   "cats": [
+    {
+     "code": "SC100",
+     "name": "Ineffective Unit Safety Culture",
+     "codes": [
+      {
+       "code": "SC101",
+       "name": "Unit Safety Culture",
+       "def": "is when  the explicit or implicit actions, statements, attitudes, techniques or values of supervisors/leaders facilitated an environment where demands or pressures existed that resulted in hazardous conditions or unsafe acts"
+      },
+      {
+       "code": "SC102",
+       "name": "Pace of OPTEMPO/Workload",
+       "def": "is when  the pace of primary duties, additional duties, training, deployments, or other workload-inducing conditions of a unit created hazardous conditions or unsafe acts"
+      }
+     ]
+    },
+    {
+     "code": "SD000",
+     "name": "Supervisory Known Deviations",
+     "codes": [
+      {
+       "code": "SD001",
+       "name": "Failure to Enforce Published Rules/Guidance",
+       "def": "is when  a supervisor/leader failed to ensure that personnel adhered to published rules/policy/guidance/procedure or knowingly allowed an untrained, inexperienced, non-proficient or non-current individual to perform a task, which resulted in a hazardous conditions or unsafe acts"
+      },
+      {
+       "code": "SD002",
+       "name": "Allowed Unwritten Practices to Become Standard (Normalization of Deviance)",
+       "def": "is when  a supervisor/leader chronically condoned the use of unwritten/unofficial procedures by subordinates, which resulted in hazardous conditions or unsafe acts"
+      },
+      {
+       "code": "SD003",
+       "name": "Directed Individual to Circumvent Existing Regulations, Rules, or Procedures",
+       "def": "is when  a leader/supervisor directed a subordinate to circumvent existing standard operating procedures, regulations, instructions, policies, or technical guidance, which resulted in a hazardous condition or unsafe acts"
+      }
+     ]
+    },
+    {
+     "code": "SI000",
+     "name": "Ineffective Supervision",
+     "codes": [
+      {
+       "code": "SI001",
+       "name": "Ineffective Supervisory or Command Oversight",
+       "def": "is when  the availability, competency, quality or timeliness of supervisor/leader oversight did not meet task or mission demands, which resulted in hazardous conditions or unsafe acts"
+      },
+      {
+       "code": "SI003",
+       "name": "Failed to Provide Effective Training",
+       "def": "is when  supervisors/leaders failed to provide effective training to ensure competency and proficiency of their personnel for a specific task which resulted in a hazardous conditions or unsafe acts"
+      },
+      {
+       "code": "SI004",
+       "name": "Failed to Provide Clear Written Procedure/Guidance/Policy",
+       "def": "is when  unit level guidance or policy was ineffective, unclear, impractical, or non-existent and resulted in hazardous conditions or unsafe acts"
+      },
+      {
+       "code": "SI006",
+       "name": "Lack of Supervisory Responses to Critical Information",
+       "def": "is when  an individual or crew provided critical information regarding a potential safety issue of the operating environment, equipment, or personnel to supervisory/leadership personnel, who failed to act/close the loop, which resulted in a hazardous conditions or unsafe acts"
+      },
+      {
+       "code": "SI007",
+       "name": "Failed to Identify or Correct Hazardous Practices, Conditions or Guidance",
+       "def": "is when  any supervisor/leader in the unit failed to identify or correct known hazardous conditions of equipment, facilities, or written procedures/guidance, or correct unsafe work practices of personnel within his/her scope, which resulted in hazardous conditions or unsafe acts"
+      },
+      {
+       "code": "SI008",
+       "name": "Tasked Individual(s) with Lack of Experience, Currency or Proficiency",
+       "def": "is when  a supervisor/leader inadvertently tasked an individual or team whose fluency or expertise did not match skills required for safe execution of the task, system or mission; or whose familiarity with a task or process was either not current or limited by infrequent or rare performance, and res"
+      },
+      {
+       "code": "SI009",
+       "name": "Rank/Position Intimidation",
+       "def": "is when  a supervisor/leader caused the task performance capabilities to be degraded by exercising too much or too little of the authority conferred by his or her rank or position"
+      }
+     ]
+    },
+    {
+     "code": "SP000",
+     "name": "Ineffective Planning & Coordination",
+     "codes": [
+      {
+       "code": "SP006",
+       "name": "Ineffective Deliberate Risk Assessment",
+       "def": "is when  supervision/leadership did not effectively apply DoD risk management procedures (identify hazards, assess hazards, develop controls, implement controls, supervise and evaluate/assess) during pre-mission/activity/event planning or a job hazard analysis, which resulted in hazardous conditions"
+      },
+      {
+       "code": "SP007",
+       "name": "Authorized Unnecessary Risk",
+       "def": "is when  a leader with risk acceptance authority unnecessarily authorized a mission, activity, or task, which resulted in hazardous conditions and/or unsafe acts"
+      },
+      {
+       "code": "SP008",
+       "name": "Ineffective Pre-Mission Planning",
+       "def": "is when  supervision/leadership did not conduct effective pre-mission/activity/event planning, which resulted in hazardous conditions and/or unsafe acts"
+      },
+      {
+       "code": "SP009",
+       "name": "Unit Failure to Provide Sufficient Operational Information Resources",
+       "def": "is when  unit/ship or installation level information resources (e.g. maps, graphic depictions, tables, charts, blueprints, weather data, intelligence, traffic, road or terrain conditions etc.) were not made fully available to personnel who executed the mission/task/event and resulted in hazardous co"
+      },
+      {
+       "code": "SP010",
+       "name": "Unit Failure to Provide Sufficient Manning/Staffing",
+       "def": "is when  unit/ship or installation planning processes failed to meet staffing demands or continuity of operations for ongoing missions and created an unnecessary workload, which resulted in hazardous conditions and/or unsafe acts"
+      },
+      {
+       "code": "SP011",
+       "name": "Unit Failure to Provide Sufficient Equipment or Supplies",
+       "def": "is when  unit/ship or installation level leaders failed to ensure personnel executing the mission received all necessary equipment and/or supplies to effectively implement risk control measures which, resulted in hazardous conditions and/or unsafe acts"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "ORG",
+   "name": "Organizational Influences (Latent Failures)",
+   "failure": "latent",
+   "cats": [
+    {
+     "code": "OC000",
+     "name": "Organizational Climate / Culture",
+     "codes": [
+      {
+       "code": "OC001",
+       "name": "Organizational Culture (attitude/actions) Created Increased Risk",
+       "def": "is when  explicit or implicit actions, statements, attitudes or techniques at an organizational level facilitated an environment where demands or pressures existed, resulting in hazardous conditions or unsafe acts throughout subordinate units or the field/fleet"
+      },
+      {
+       "code": "OC003",
+       "name": "Organizational Perceptions of Materiel Resources (Equipment)",
+       "def": "is when  there was organizational over- or under-confidence in vehicle systems, vessels, aircraft, weapons systems, communication systems or any other materiel, resulting in a hazardous condition or unsafe acts throughout subordinate units or the field/fleet"
+      },
+      {
+       "code": "OC004",
+       "name": "Mission/Aircraft/Vehicle/Ship/Equipment Change or Unit Deactivation",
+       "def": "is when  the process of changing missions, aircraft/vehicle/ship/equipment or an impending deactivation resulted in hazardous conditions or unsafe acts throughout subordinate units or the field/fleet"
+      },
+      {
+       "code": "OC005",
+       "name": "Organizational Structure is Unclear or Inadequate",
+       "def": "is when  the chain of command of subordinate commander(s) or structure of an organization was confusing, non-standard or inadequate, resulting in hazardous conditions or unsafe acts throughout subordinate units or the field/fleet"
+      }
+     ]
+    },
+    {
+     "code": "OP000",
+     "name": "Policy, Procedures & Process Issues",
+     "codes": [
+      {
+       "code": "OP001",
+       "name": "OPTEMPO/Workload",
+       "def": "is when  the workload-inducing conditions on one or more subordinate units/ships created hazardous conditions for unit/ship commanders and supervisors to effectively manage risks during pre-deployment readiness activities (effects on unit"
+      },
+      {
+       "code": "OP002",
+       "name": "Organizational Program or Operation not Adequately Assessed",
+       "def": "is when  the potential risks of large programs, contract management, acquisition programs or operations were not assessed adequately, and this inadequacy impacted subordinate level actions"
+      },
+      {
+       "code": "OP005",
+       "name": "Flawed Doctrine/Philosophy",
+       "def": "is when  the doctrine, philosophy or concept of operations in an organization is flawed or accepts unnecessary risk, which leads to unmitigated hazardous conditions and/or unsafe acts throughout subordinate units or the field/fleet"
+      },
+      {
+       "code": "OP006",
+       "name": "Inadequate Program Management/Governance",
+       "def": "is when  formal programs (e.g., a Program of Record) are implemented without sufficient planning, oversight, or support and creates hazardous conditions or unsafe acts throughout subordinate units or the field/fleet"
+      }
+     ]
+    },
+    {
+     "code": "OR000",
+     "name": "Resource Support Problems",
+     "codes": [
+      {
+       "code": "OR001",
+       "name": "Command and Control (C2) Resources are Deficient",
+       "def": "is when  installation or resources of command staff, maritime or airfield services, communications/IT support, etc. are unavailable or inadequate for safe operations, resulting in hazardous conditions or unsafe acts throughout subordinate units or the field/fleet (e.g., Joint force or individual com"
+      },
+      {
+       "code": "OR003",
+       "name": "Inadequate Infrastructure",
+       "def": "is when  the support, maintenance and/or space provided by installations or industrial facilities supporting military operations or military production programs become inadequate, degraded or non-available, resulting in hazardous conditions or unsafe acts"
+      },
+      {
+       "code": "OR004",
+       "name": "Purchasing or Providing Poorly Designed or Unsuitable Equipment",
+       "def": "is when there are inadequacies in the acquisition and/or fielding of materiel, resulting in hazardous conditions or fallible decisions throughout subordinate units (late fielding, poor installation/inspection/QC, or depot maintenance failures)."
+      },
+      {
+       "code": "OR005",
+       "name": "Failure to Remove Inadequate/Worn-Out Equipment in a Timely Manner",
+       "def": "is when  the process through which equipment is removed from service is inadequate, resulting in 26 Encl (1) U.S"
+      },
+      {
+       "code": "OR006",
+       "name": "Personnel Accession/Selection Policies or Processes",
+       "def": "is when  the process through which individuals are recruited, screened, brought into the service or placed into occupational specialties is ineffective, resulting in hazardous conditions or unsafe acts throughout subordinate units or the field/fleet"
+      },
+      {
+       "code": "OR007",
+       "name": "Failure to Provide Adequate Personnel/Staffing Resources",
+       "def": "is when  the process through which personnel resource allocations, staffing or personnel placement processes are inadequate for mission demands, resulting in hazardous conditions or unsafe acts throughout subordinate units or the field/fleet"
+      },
+      {
+       "code": "OR008",
+       "name": "Failure to Provide Adequate Information Resources",
+       "def": "is when  weather, intelligence, operational planning material or other information necessary for safe operations planning are too complex, too vague, incorrect or not available throughout the organization, resulting in hazardous conditions or unsafe acts throughout subordinate units or the field/fle"
+      },
+      {
+       "code": "OR009",
+       "name": "Failure to Provide Adequate Funding",
+       "def": "is when  subordinate organizations or an operation does not receive the financial resources to complete its assigned mission/task, resulting in hazardous conditions or unsafe acts throughout subordinate units or the field/fleet"
+      }
+     ]
+    },
+    {
+     "code": "OT000",
+     "name": "Training Programs",
+     "codes": [
+      {
+       "code": "OT001",
+       "name": "Resident Formal School Training Program is Ineffective or Unavailable",
+       "def": "is when  resident based formal school training conducted by a formal schoolhouse under TECOM, TRADOC, NETC, AETC, or USCG-FORCECOM is either incorrect, incomplete, insufficient or unavailable for performance to standard, resulting in hazardous conditions or unsafe acts throughout subordinate units o"
+      },
+      {
+       "code": "OT002",
+       "name": "Distance Learning Training is Ineffective or Unavailable",
+       "def": "is when  distance learning programs provided by either military service component or contracted organizations is incorrect, incomplete, insufficient or unavailable for performance to standard, resulting in hazardous conditions or unsafe acts throughout subordinate units or the field/fleet"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+};
+</script>
+<script>
 /* ================= state & persistence ================= */
 const LS_KEY = "taproot_investigations_v1";
 let store = { investigations: [], currentId: null };
@@ -693,7 +1367,7 @@ function attrJS(v){ return esc(JSON.stringify(v)); } // safe to embed inside dou
 function blankInv(title){
   return { id: uid(), created: new Date().toISOString(),
     meta:{title:title||"Untitled investigation",date:"",location:"",investigator:"",team:"",cls:"",desc:"",evidence:"",witnesses:""},
-    items:[], analyses:{}, actions:[] };
+    items:[], analyses:{}, actions:[], barriers:[], hfacs:{} };
 }
 function loadStore(){
   try{ const raw = localStorage.getItem(LS_KEY); if(raw) store = JSON.parse(raw); }catch(e){}
@@ -701,6 +1375,7 @@ function loadStore(){
     const inv = blankInv("My first investigation");
     store = { investigations:[inv], currentId: inv.id };
   }
+  store.investigations.forEach(inv=>{ inv.barriers=inv.barriers||[]; inv.hfacs=inv.hfacs||{}; inv.meta.execSummary=inv.meta.execSummary||""; inv.meta.sustain=inv.meta.sustain||""; });
   state = store.investigations.find(i=>i.id===store.currentId) || store.investigations[0];
   store.currentId = state.id;
 }
@@ -738,7 +1413,7 @@ function importJSON(ev){
   r.onload = ()=>{ try{
       const inv = JSON.parse(r.result);
       if(!inv.meta || !inv.items) throw new Error("Not a valid investigation file");
-      inv.id = uid();
+      inv.id = uid(); inv.barriers=inv.barriers||[]; inv.hfacs=inv.hfacs||{};
       store.investigations.push(inv); store.currentId = inv.id; state = inv;
       save(); renderAll();
     }catch(e){ alert("Import failed: "+e.message); } };
@@ -757,8 +1432,9 @@ function gotoStep(n){
   document.querySelectorAll(".step-page").forEach((p,i)=>p.style.display = i===n ? "" : "none");
   if(n===2) renderCF();
   if(n===3) renderRCASelect();
-  if(n===4) renderCA();
-  if(n===5) buildReport();
+  if(n===4) renderHFACSSelect();
+  if(n===5) renderCA();
+  if(n===6) buildReport();
 }
 
 /* ================= meta (step 0) ================= */
@@ -801,7 +1477,7 @@ function delItem(id){
   const kids = state.items.filter(i=>i.parent===id).length;
   if(!confirm(`Delete this ${it.type}${kids?` and its ${kids} condition(s)`:""}?`)) return;
   state.items = state.items.filter(i=>i.id!==id && i.parent!==id);
-  delete state.analyses[id];
+  delete state.analyses[id]; delete state.hfacs[id];
   state.actions = state.actions.filter(a=>a.cfId!==id);
   if(selectedItem===id) selectedItem=null;
   save(); renderChart();
@@ -819,7 +1495,7 @@ function toggleProp(id,prop){
   const it = state.items.find(i=>i.id===id); if(!it) return;
   it[prop] = !it[prop];
   if(prop==="cf" && it.cf) it.problem = true;
-  if(prop==="cf" && !it.cf){ delete state.analyses[id]; state.actions = state.actions.filter(a=>a.cfId!==id); }
+  if(prop==="cf" && !it.cf){ delete state.analyses[id]; delete state.hfacs[id]; state.actions = state.actions.filter(a=>a.cfId!==id); }
   save(); renderChart();
 }
 function setItemField(id,field,val){
@@ -905,8 +1581,94 @@ function renderCF(){
         <button class="btn small danger" onclick="toggleProp('${c.id}','cf');renderCF()">Demote</button>
       </div></div>`;}).join("")
     : `<div class="muted" style="padding:8px 2px">None yet. Most incidents have <b>multiple</b> Causal Factors — typically one per failed Safeguard.</div>`}`;
+  renderBarriers();
 }
 function openRCA(cfId){ gotoStep(3); document.getElementById("rca-cf-select").value = cfId; renderRCA(); }
+
+/* ================= Barriers / Safeguards ================= */
+function addBarrier(){ state.barriers.push({id:uid(),name:"",status:"Failed",notes:""}); save(); renderBarriers(); }
+function setBarrier(id,f,v){ const b=state.barriers.find(x=>x.id===id); if(b){ b[f]=v; save(); } }
+function delBarrier(id){ state.barriers=state.barriers.filter(b=>b.id!==id); save(); renderBarriers(); }
+function renderBarriers(){
+  const el=document.getElementById("barrier-panel"); if(!el) return;
+  el.innerHTML = (state.barriers.length? `<table class="ca"><thead><tr><th>Barrier / Safeguard</th><th style="width:15%">Status</th><th style="width:38%">Notes (why it failed / was absent / how it helped)</th><th style="width:34px"></th></tr></thead><tbody>`+
+    state.barriers.map(b=>`<tr>
+      <td><input type="text" value="${esc(b.name)}" placeholder="e.g., two-person rule, interlock, machine guard, permit-to-work" oninput="setBarrier('${b.id}','name',this.value)"></td>
+      <td><select onchange="setBarrier('${b.id}','status',this.value)">${["Failed","Not present","Success"].map(x=>`<option ${b.status===x?"selected":""}>${x}</option>`).join("")}</select></td>
+      <td><textarea oninput="setBarrier('${b.id}','notes',this.value)">${esc(b.notes)}</textarea></td>
+      <td><button class="btn small danger" onclick="delBarrier('${b.id}')">✕</button></td></tr>`).join("")+`</tbody></table>` : `<div class="muted" style="padding:6px 2px">No barriers recorded yet.</div>`) +
+    `<div style="margin-top:8px"><button class="btn" onclick="addBarrier()">+ Add barrier</button></div>`;
+}
+function barriersText(){
+  return state.barriers.map(b=>`${b.name||"(unnamed)"} — ${b.status}${b.notes?" — "+b.notes:""}`).join("\n")||"(no barriers recorded)";
+}
+
+/* ================= HFACS (step 4) ================= */
+function getHfacs(cfId){
+  if(!state.hfacs[cfId]) state.hfacs[cfId]={selected:[],notes:"",open:{}};
+  const h=state.hfacs[cfId]; if(!h.selected)h.selected=[]; if(!h.open)h.open={};
+  return h;
+}
+function renderHFACSSelect(){
+  const cfs=state.items.filter(i=>i.cf);
+  const sel=document.getElementById("hfacs-cf-select"); if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML=cfs.length? cfs.map(c=>`<option value="${c.id}">▲ ${esc(cfLabel(c))}</option>`).join("") : `<option value="">— no causal factors defined yet (Step 3) —</option>`;
+  if(cfs.some(c=>c.id===cur)) sel.value=cur;
+  renderHFACS();
+}
+function hfacsToggle(cfId,code,name,cat,tier,failure){
+  const h=getHfacs(cfId);
+  const i=h.selected.findIndex(x=>x.code===code);
+  if(i>=0) h.selected.splice(i,1); else h.selected.push({code,name,cat,tier,failure});
+  save(); renderHFACS();
+}
+function hfacsOpen(cfId,key){ const h=getHfacs(cfId); h.open[key]=!h.open[key]; save(); renderHFACS(); }
+function renderHFACS(){
+  const sel=document.getElementById("hfacs-cf-select"); if(!sel) return;
+  const cfId=sel.value;
+  const body=document.getElementById("hfacs-body"); if(!body) return;
+  const cf=state.items.find(i=>i.id===cfId && i.cf);
+  if(!cf){ body.innerHTML=`<div class="empty-note">Define Causal Factors in Step 3 first — then classify the contributing human factors here.</div>`; return; }
+  const h=getHfacs(cfId);
+  let html=`<div class="hint"><b>Causal Factor:</b> ${esc(cf.text||"")} — tick every nanocode supported by evidence. Tier 1 selections are <b>active failures</b>; tiers 2–4 are <b>latent failures/conditions</b>.</div>`;
+  html+=HFACS.tiers.map((t,ti)=>{
+    const cnt=h.selected.filter(x=>x.tier===t.name).length;
+    const open=!!h.open["t"+ti];
+    return `<div class="acc ${open?'open':''}">
+      <div class="acc-head" onclick="hfacsOpen('${cfId}','t${ti}')"><span class="chev">▶</span>
+        <span class="t">Tier ${ti+1} — ${esc(t.name)}</span>
+        <span class="badge ${t.failure==='active'?'inc':'co'}">${t.failure==='active'?'ACTIVE':'LATENT'}</span>
+        <span class="badge ${cnt?'done':'todo'}">${cnt||"no"} selected</span></div>
+      <div class="acc-body">`+
+      t.cats.map(c=>`<div class="nrc">
+        <div class="nrc-head" onclick="toggleNode(this)"><span class="chev">▶</span> ${esc(c.name)} <span class="muted" style="font-weight:400;font-size:11px">(${c.code})</span></div>
+        <div class="nrc-body">`+
+        c.codes.map(n=>{
+          const on=h.selected.some(x=>x.code===n.code);
+          return `<div class="rc-row ${on?'open':''}">
+            <input type="checkbox" ${on?"checked":""} onchange="hfacsToggle('${cfId}','${n.code}',${attrJS(n.name)},${attrJS(c.name)},${attrJS(t.name)},'${t.failure}')">
+            <div style="flex:1"><span class="rc-name" onclick="this.closest('.rc-row').classList.toggle('open')"><b>${n.code}</b> ${esc(n.name)} <span class="muted" style="font-weight:400;font-size:11px">(definition)</span></span>
+            <div class="rc-qs">${esc(n.def)}</div></div></div>`;
+        }).join("")+`</div></div>`).join("")+`</div></div>`;
+  }).join("");
+  const acts=h.selected.filter(x=>x.failure==="active").length, pre=h.selected.filter(x=>x.tier===HFACS.tiers[1].name).length;
+  if(acts && !pre) html+=`<div class="hint warn"><b>HFACS check:</b> you selected an Unsafe Act but no Precondition — HFACS expects at least one Precondition for every Unsafe Act.</div>`;
+  if(h.selected.length){
+    html+=`<h3>HFACS codes selected for this Causal Factor</h3><div>`+h.selected.map(x=>`<span class="rc-tag" style="background:${x.failure==='active'?'#c0392b':'#6a3fa0'}">${x.code} ${esc(x.name)} <span class="x" onclick="hfacsToggle('${cfId}','${x.code}',${attrJS(x.name)},${attrJS(x.cat)},${attrJS(x.tier)},'${x.failure}')">✕</span></span>`).join("")+`</div>`;
+  }
+  html+=`<div class="field" style="margin-top:10px"><label>HFACS notes / narrative for this causal factor</label>
+   <textarea rows="3" oninput="getHfacs('${cfId}').notes=this.value;save()">${esc(h.notes||"")}</textarea></div>`;
+  body.innerHTML=html;
+}
+function hfacsText(){
+  const parts=[];
+  state.items.filter(i=>i.cf).forEach((cf,i)=>{
+    const h=state.hfacs[cf.id];
+    if(h&&(h.selected.length||h.notes)) parts.push(`CF-${i+1} "${cf.text}": `+h.selected.map(x=>`${x.code} ${x.name} [${x.failure}]`).join("; ")+(h.notes?` | notes: ${h.notes}`:""));
+  });
+  return parts.join("\n")||"(no HFACS classification yet)";
+}
 
 /* ================= Root Cause Analysis (step 3) ================= */
 function getAnalysis(cfId){
@@ -1101,15 +1863,26 @@ function buildReport(){
   const cfs = state.items.filter(i=>i.cf);
   const out = document.getElementById("report-out");
   const dt = m.date? new Date(m.date).toLocaleString() : "—";
-  let html = `<h1>Incident Investigation Report</h1>
+  const ed1=document.getElementById("ed-exec"), ed2=document.getElementById("ed-sustain");
+  if(ed1 && ed1!==document.activeElement) ed1.value=m.execSummary||"";
+  if(ed2 && ed2!==document.activeElement) ed2.value=m.sustain||"";
+  const nl = t=>esc(t).replace(/\n/g,"<br>");
+  let html = `<h1>Incident Investigation Report — ${esc(m.title)||"Untitled"}</h1>`;
+
+  html += `<h2>1. Executive Summary</h2><p>${m.execSummary? nl(m.execSummary) : "<i>Not written yet — use the Executive Summary editor above (or its 🤖 AI draft button).</i>"}</p>`;
+
+  html += `<h2>2. Incident Details</h2>
    <div class="meta-grid">
      <div><b>Title:</b> ${esc(m.title)||"—"}</div><div><b>Incident date/time:</b> ${dt}</div>
      <div><b>Location:</b> ${esc(m.location)||"—"}</div><div><b>Classification:</b> ${esc(m.cls)||"—"}</div>
      <div><b>Lead investigator:</b> ${esc(m.investigator)||"—"}</div><div><b>Team:</b> ${esc(m.team)||"—"}</div>
      <div style="grid-column:1/-1"><b>Report generated:</b> ${new Date().toLocaleString()}</div>
    </div>
-   <h2>1. Incident description</h2><p>${esc(m.desc)||"<i>not recorded</i>"}</p>`;
-  html += `<h2>2. Sequence of events (SnapCharT®)</h2>
+   <p><b>Description:</b> ${esc(m.desc)||"<i>not recorded</i>"}</p>
+   <p><b>Evidence collected/preserved:</b><br>${nl(m.evidence)||"—"}</p>
+   <p><b>Interviews:</b><br>${nl(m.witnesses)||"—"}</p>`;
+
+  html += `<h2>3. Incident Findings — sequence of events (SnapCharT®)</h2>
    <table><tr><th style="width:14%">Date/Time</th><th style="width:12%">Type</th><th>Description</th><th style="width:18%">Flags</th></tr>` +
    seq.map(ev=>{
      const conds = state.items.filter(c=>c.parent===ev.id);
@@ -1117,7 +1890,28 @@ function buildReport(){
      return `<tr><td>${esc(ev.time)||""}</td><td><b>${ev.type==="incident"?"INCIDENT":"Event"}</b></td><td>${esc(ev.text)}</td><td>${flag(ev)}</td></tr>` +
        conds.map(c=>`<tr><td></td><td style="padding-left:18px">Condition</td><td style="font-style:italic">${esc(c.text)}</td><td>${flag(c)}</td></tr>`).join("");
    }).join("") + `</table>`;
-  html += `<h2>3. Causal factors &amp; root causes</h2>`;
+  const probs = state.items.filter(i=>i.problem);
+  if(probs.length) html += `<p><b>Problems identified on the chart:</b></p><ul>`+probs.map(p=>`<li>${esc(p.text)}${p.cf?" — <b>Causal Factor ▲</b>":""}</li>`).join("")+`</ul>`;
+
+  html += `<h2>4. Barrier Analysis — failed / not present / success</h2>`;
+  if(state.barriers.length){
+    html += `<table><tr><th>Barrier / Safeguard</th><th style="width:16%">Status</th><th>Notes</th></tr>`+
+      state.barriers.map(b=>`<tr><td>${esc(b.name)}</td><td><b>${esc(b.status)}</b></td><td>${esc(b.notes)}</td></tr>`).join("")+`</table>`;
+    const cnt = st=>state.barriers.filter(b=>b.status===st).length;
+    html += `<p class="muted" style="font-size:12px">${cnt("Failed")} failed · ${cnt("Not present")} not present · ${cnt("Success")} successful.</p>`;
+  } else html += `<p><i>No barrier analysis recorded (see the Causal Factors tab).</i></p>`;
+
+  html += `<h2>5. Active and Latent Failures (DoD HFACS 8.0)</h2>`;
+  const hrows=[];
+  cfs.forEach((cf,i)=>{ const h=state.hfacs[cf.id]; if(h) (h.selected||[]).forEach(x=>hrows.push(Object.assign({cfn:"CF-"+(i+1)},x))); });
+  if(hrows.length){
+    html += `<table><tr><th style="width:8%">CF</th><th style="width:10%">Failure</th><th style="width:26%">HFACS tier</th><th style="width:24%">Category</th><th>Nanocode</th></tr>`+
+      hrows.map(r=>`<tr><td>${r.cfn}</td><td><b>${r.failure==="active"?"Active":"Latent"}</b></td><td>${esc(r.tier)}</td><td>${esc(r.cat)}</td><td><b>${r.code}</b> ${esc(r.name)}</td></tr>`).join("")+`</table>`;
+    cfs.forEach((cf,i)=>{ const h=state.hfacs[cf.id]; if(h&&h.notes) html+=`<p><b>CF-${i+1} HFACS notes:</b> ${esc(h.notes)}</p>`; });
+    html += `<p class="muted" style="font-size:12px">${hrows.filter(r=>r.failure==="active").length} active failure code(s) · ${hrows.filter(r=>r.failure!=="active").length} latent failure/condition code(s).</p>`;
+  } else html += `<p><i>No HFACS classification recorded (see the HFACS tab).</i></p>`;
+
+  html += `<h2>6. Root Causes</h2>`;
   if(!cfs.length) html += `<p><i>No causal factors defined.</i></p>`;
   cfs.forEach((cf,i)=>{
     const an = state.analyses[cf.id]||{};
@@ -1130,14 +1924,15 @@ function buildReport(){
     }
     if(an.selected && an.selected.length){
       html += `<table><tr><th>Basic cause category</th><th>Near root cause</th><th>Root cause</th></tr>` +
-        an.selected.map(s=>`<tr><td>${esc(s.cat)}</td><td>${esc(s.nrc)}</td><td><b>${esc(s.rc)}</b></td></tr>`).join("") + `</table>`;
+        an.selected.map(x=>`<tr><td>${esc(x.cat)}</td><td>${esc(x.nrc)}</td><td><b>${esc(x.rc)}</b></td></tr>`).join("") + `</table>`;
     } else if(an.otherNote){
       html += `<p><b>Findings:</b> ${esc(an.otherNote)}</p>`;
     } else {
       html += `<p><i>Root cause analysis pending.</i></p>`;
     }
   });
-  html += `<h2>4. Corrective actions</h2>`;
+
+  html += `<h2>7. Recommended Actions</h2>`;
   if(state.actions.length){
     html += `<table><tr><th>#</th><th>Causal factor</th><th>Root cause</th><th>Corrective action</th><th>Owner</th><th>Due</th><th>Status</th></tr>` +
       state.actions.map((a,i)=>{
@@ -1145,10 +1940,14 @@ function buildReport(){
         return `<tr><td>${i+1}</td><td>${cf?esc(cfLabel(cf)):""}</td><td>${esc(a.rc)}</td><td>${esc(a.action)}</td><td>${esc(a.owner)}</td><td>${esc(a.due)}</td><td>${esc(a.status)}</td></tr>`;
       }).join("") + `</table>`;
   } else html += `<p><i>No corrective actions recorded.</i></p>`;
-  html += `<h2>5. Evidence &amp; interviews</h2>
-    <p><b>Evidence collected/preserved:</b><br>${esc(m.evidence).replace(/\n/g,"<br>")||"—"}</p>
-    <p><b>Interviews:</b><br>${esc(m.witnesses).replace(/\n/g,"<br>")||"—"}</p>
-    <p style="margin-top:26px;font-size:11px;color:#777">Prepared with Risk2Safe — Incident Investigation Workbench. SnapCharT®, Root Cause Tree® and TapRooT® are registered trademarks of System Improvements, Inc.</p>`;
+
+  html += `<h2>8. Sustainability Analysis of the Recommendations</h2>
+   <p>${m.sustain? nl(m.sustain) : "<i>Not written yet — use the Sustainability editor above (or its 🤖 AI draft button).</i>"}</p>`;
+  if(state.actions.length){
+    const st = x=>state.actions.filter(a=>a.status===x).length;
+    html += `<p class="muted" style="font-size:12px">Action status: ${state.actions.length} total — ${st("Open")} open, ${st("In progress")} in progress, ${st("Implemented")} implemented, ${st("Verified effective")} verified effective.</p>`;
+  }
+  html += `<p style="margin-top:26px;font-size:11px;color:#777">Prepared with Risk2Safe — Incident Investigation Workbench. SnapCharT®, Root Cause Tree® and TapRooT® are registered trademarks of System Improvements, Inc. DoD HFACS 8.0 per U.S. Department of Defense documentation.</p>`;
   out.innerHTML = html;
 }
 
@@ -1221,20 +2020,13 @@ const AI_STEP_PROMPTS = [
  {title:"SnapCharT quality", ask:"Review the SNAPCHART timeline. Check each item: Events should be 'who did what' with active verbs, one action each, chronological, with date/times; Conditions should be passive 'was/were' factual statements attached to the right Event; the Incident should be the single worst event. Identify: (1) gaps in the sequence (what likely happened between events — suggest missing Events), (2) missing Conditions the investigator should gather (procedures, training, supervision, equipment state, environment, communications), (3) judgmental or vague wording to fix, (4) UNPROVEN items that most need verification and how to verify them."},
  {title:"causal factor selection", ask:"Review the CAUSAL FACTOR selection using the 4-Step Method. For each marked CF: is it a big-picture 'who did what wrong' or 'what equipment failed' (not too narrow like a root cause, not the Incident itself)? Are any marked problems wrongly promoted/demoted? CRITICALLY: based on the chart, list any MISSED causal factors (failed safeguards). Most incidents have multiple CFs."},
  {title:"root cause analysis", ask:"Review the ROOT CAUSE ANALYSIS of each causal factor. Check: (1) is the Level-1 classification right? (2) are the 15-Question yes/no answers consistent with the chart evidence? (3) do the selected root causes logically follow from the evidence — flag selections without supporting evidence on the chart, and suggest root causes/categories that the evidence points to but were not selected (use TapRooT-style category names: Procedures, Training, Quality Control, Communications, Management System, Human Engineering, Work Direction, Equipment Difficulty). (4) Remind about generic/systemic causes where relevant."},
+ {title:"HFACS human-factors classification", ask:"Review the DoD HFACS 8.0 CLASSIFICATION of each causal factor (see HFACS CLASSIFICATION in the context). Check: (1) does every human-error causal factor have at least one Unsafe Act nanocode AND at least one Precondition (HFACS expects a precondition for each unsafe act)? (2) are the Supervisory and Organizational tiers properly considered — name likely latent failures the evidence suggests but that were not coded; (3) flag selected codes NOT supported by the chart evidence; (4) summarize the active vs latent failure picture in 2-3 sentences. Suggest specific nanocodes (code + name) to add or remove."},
  {title:"corrective actions", ask:"Review each CORRECTIVE ACTION against SMARTER (Specific, Measurable, Accountable, Reasonable, Timely, Effective, Reviewed). For each: state pass/fail per letter briefly and rewrite it stronger. Push fixes UP the hierarchy of controls (remove hazard / error-proof design > guards > warnings > procedures/admin > training). Flag root causes with weak 're-train and remind' fixes, missing owners/dates, and missing effectiveness-verification steps."},
- {title:"final report", ask:"Do an end-to-end CONSISTENCY review of the whole investigation: does the timeline support the causal factors, do the causal factors support the root causes, and does every root cause have an adequate corrective action? List the top gaps blocking sign-off. Then DRAFT a concise executive summary (5-8 sentences: what happened, why, key root causes, what will change) the investigator can paste into the report."}
+ {title:"final report", ask:"Do an end-to-end CONSISTENCY review across the report sections: Executive Summary, Incident Details, Incident Findings, Barrier analysis (failed/not present/success), Active & Latent failures (HFACS), Root Causes, Recommended actions, Sustainability. Check: timeline supports the causal factors; causal factors support the root causes and HFACS codes; every failed/missing barrier traces to a causal factor; every root cause has an adequate corrective action. List the top gaps blocking sign-off. Then DRAFT: (a) an executive summary (5-8 sentences) and (b) a sustainability analysis of the recommendations (control strength, ownership, verification cycle, audits/trending, management review)."}
 ];
-async function aiReview(step){
-  const ai = getAI();
-  if(!ai.key){ openAISettings(); return; }
-  const btn = document.getElementById("ai-btn-"+step);
-  const out = document.getElementById("ai-out-"+step);
-  out.classList.add("show");
-  out.innerHTML = `<span class="muted">⏳ Asking ${esc(ai.model||"gpt-4o-mini")} to review the ${AI_STEP_PROMPTS[step].title}…</span>`;
-  btn.disabled = true;
+function aiFullContext(){
   const m = state.meta;
-  const context =
-`INVESTIGATION: ${m.title||"-"} | Date: ${m.date||"-"} | Location: ${m.location||"-"} | Class: ${m.cls||"-"}
+  return `INVESTIGATION: ${m.title||"-"} | Date: ${m.date||"-"} | Location: ${m.location||"-"} | Class: ${m.cls||"-"}
 DESCRIPTION: ${m.desc||"-"}
 EVIDENCE PLAN: ${m.evidence||"-"}
 INTERVIEW PLAN: ${m.witnesses||"-"}
@@ -1245,8 +2037,38 @@ ${snapText()}
 CAUSAL FACTORS & ROOT CAUSE ANALYSIS:
 ${cfAnalysisText()}
 
+BARRIERS / SAFEGUARDS:
+${barriersText()}
+
+HFACS CLASSIFICATION (DoD 8.0):
+${hfacsText()}
+
 CORRECTIVE ACTIONS:
 ${actionsText()}`;
+}
+async function aiDraftField(field, btn){
+  if(!getAI().key){ openAISettings(); return; }
+  if(btn) btn.disabled=true;
+  try{
+    const ask = field==="execSummary"
+      ? "Write an executive summary for the investigation report (5-8 sentences, plain prose, no bullets): what happened, why (key causal factors and failed barriers), the principal root causes and latent failures, and what will change. Reply with the summary text only."
+      : "Write a sustainability analysis of the recommended corrective actions (plain prose, a short paragraph per theme): for each action or group state its hierarchy-of-controls strength, the owning role, how and at what cycle effectiveness will be verified, what audits/trending will detect regression over time, and when management reviews it. Reply with the analysis text only.";
+    const txt=(await aiCall("You are a senior incident-investigation report writer. Use only the facts provided; do not invent. Plain text output.", aiFullContext()+"\n\nTASK: "+ask, 700)).trim();
+    state.meta[field]=txt; save();
+    const ed=document.getElementById(field==="execSummary"?"ed-exec":"ed-sustain"); if(ed) ed.value=txt;
+    buildReport();
+  }catch(e){ alert("AI draft failed: "+e.message); }
+  finally{ if(btn) btn.disabled=false; }
+}
+async function aiReview(step){
+  const ai = getAI();
+  if(!ai.key){ openAISettings(); return; }
+  const btn = document.getElementById("ai-btn-"+step);
+  const out = document.getElementById("ai-out-"+step);
+  out.classList.add("show");
+  out.innerHTML = `<span class="muted">⏳ Asking ${esc(ai.model||"gpt-4o-mini")} to review the ${AI_STEP_PROMPTS[step].title}…</span>`;
+  btn.disabled = true;
+  const context = aiFullContext();
   try{
     const res = await fetch("https://api.openai.com/v1/chat/completions",{
       method:"POST",
@@ -1416,8 +2238,9 @@ function renderAll(){
   renderInvSelect(); bindMeta(); renderChart();
   if(currentStep===2) renderCF();
   if(currentStep===3) renderRCASelect();
-  if(currentStep===4) renderCA();
-  if(currentStep===5) buildReport();
+  if(currentStep===4) renderHFACSSelect();
+  if(currentStep===5) renderCA();
+  if(currentStep===6) buildReport();
 }
 loadStore();
 renderAll();
