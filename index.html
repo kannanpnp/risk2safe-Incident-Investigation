@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Risk2Safe — Incident Investigation Workbench</title>
+<style>
+:root{
+  --bg:#f4f6f9; --panel:#ffffff; --ink:#1d2733; --muted:#5a6a7a;
+  --brand:#0d5c63; --brand2:#0a4a50; --accent:#e8b931; --danger:#c0392b;
+  --event:#2c6fad; --cond:#7a5ea8; --incident:#c0392b; --cf:#e67e22;
+  --line:#d7dee6; --ok:#2e8b57;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",system-ui,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
+header.appbar{background:var(--brand);color:#fff;padding:10px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+header.appbar h1{font-size:17px;margin:0;font-weight:600;letter-spacing:.3px}
+header.appbar .sub{font-size:11px;opacity:.85}
+.appbar .spacer{flex:1}
+.btn{border:1px solid var(--line);background:#fff;color:var(--ink);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:13px;transition:background .15s}
+.btn:hover{background:#eef3f7}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#222;font-weight:600}
+.btn.primary:hover{background:#f0c64a}
+.btn.ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.45)}
+.btn.ghost:hover{background:rgba(255,255,255,.12)}
+.btn.small{padding:3px 8px;font-size:12px}
+.btn.danger{color:var(--danger);border-color:#e3b4ae}
+.btn.danger:hover{background:#fbeeec}
+select,input[type=text],input[type=date],input[type=datetime-local],input[type=password],textarea{
+  border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:13px;font-family:inherit;background:#fff;color:var(--ink)}
+textarea{resize:vertical}
+nav.steps{display:flex;background:var(--panel);border-bottom:1px solid var(--line);padding:0 12px;overflow-x:auto;position:sticky;top:48px;z-index:40}
+nav.steps button{border:none;background:none;padding:12px 16px;font-size:13.5px;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap;font-weight:500}
+nav.steps button.active{font-weight:600}
+nav.steps button .num{display:inline-block;color:#fff;border-radius:50%;width:19px;height:19px;line-height:19px;text-align:center;font-size:11px;margin-right:6px}
+main{padding:18px;max-width:1500px;margin:0 auto}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px;border-top:4px solid var(--brand)}
+.panel h2{margin:0 0 4px;font-size:16px;color:var(--brand)}
+.panel h3{margin:14px 0 6px;font-size:14px}
+.hint{background:#f2f7f4;border-left:4px solid var(--brand);padding:9px 12px;border-radius:0 6px 6px 0;font-size:12.5px;color:#33473f;margin:8px 0}
+.hint b{color:var(--brand)}
+.warn{background:#fdf6e3;border-left:4px solid var(--accent)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field label{display:block;font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.4px}
+.field input,.field textarea,.field select{width:100%}
+/* ---------- per-step color themes ---------- */
+body.theme-0{--brand:#0d5c63;--brand2:#0a4a50;--bg:#e9f4f4}
+body.theme-1{--brand:#1f5fa8;--brand2:#174a85;--bg:#eaf1fb}
+body.theme-2{--brand:#c2611a;--brand2:#9d4d12;--bg:#fdf1e6}
+body.theme-3{--brand:#6a3fa0;--brand2:#553283;--bg:#f3edfb}
+body.theme-4{--brand:#2e7d4f;--brand2:#24633e;--bg:#eaf6ef}
+body.theme-5{--brand:#44546a;--brand2:#364455;--bg:#eef1f5}
+header.appbar{transition:background .25s}
+nav.steps button[data-step="0"] .num{background:#0d5c63}
+nav.steps button[data-step="1"] .num{background:#1f5fa8}
+nav.steps button[data-step="2"] .num{background:#c2611a}
+nav.steps button[data-step="3"] .num{background:#6a3fa0}
+nav.steps button[data-step="4"] .num{background:#2e7d4f}
+nav.steps button[data-step="5"] .num{background:#44546a}
+nav.steps button[data-step="0"].active{color:#0d5c63;border-bottom-color:#0d5c63}
+nav.steps button[data-step="1"].active{color:#1f5fa8;border-bottom-color:#1f5fa8}
+nav.steps button[data-step="2"].active{color:#c2611a;border-bottom-color:#c2611a}
+nav.steps button[data-step="3"].active{color:#6a3fa0;border-bottom-color:#6a3fa0}
+nav.steps button[data-step="4"].active{color:#2e7d4f;border-bottom-color:#2e7d4f}
+nav.steps button[data-step="5"].active{color:#44546a;border-bottom-color:#44546a}
+nav.steps button.active .num{background:var(--accent);color:#222}
+/* ---------- AI review ---------- */
+.ai-block{margin-top:16px;border:1.5px dashed #b8a6d9;border-radius:10px;padding:12px;background:linear-gradient(135deg,#faf7ff,#f3f8ff)}
+.ai-block .ai-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.btn.ai{background:#5a2ea6;border-color:#5a2ea6;color:#fff;font-weight:600}
+.btn.ai:hover{background:#6d3fc4}
+.btn.ai:disabled{opacity:.55;cursor:wait}
+.ai-out{margin-top:10px;font-size:13px;line-height:1.55;display:none;background:#fff;border:1px solid #e4def2;border-radius:8px;padding:12px 14px;max-height:480px;overflow:auto}
+.ai-out.show{display:block}
+.ai-out h4{margin:10px 0 4px;color:#5a2ea6;font-size:13px}
+.ai-out ul{margin:4px 0;padding-left:20px}
+.ai-out li{margin:3px 0}
+.ai-tag{font-size:10.5px;color:#5a2ea6;background:#efe8fb;padding:2px 8px;border-radius:10px}
+.ai-err{color:var(--danger);font-weight:600}
+/* ---------- SnapCharT ---------- */
+.chart-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin:6px 0 12px}
+.legend span{display:flex;align-items:center;gap:5px}
+.lg{display:inline-block;width:26px;height:15px;border:2px solid var(--event);border-radius:3px}
+.lg.cond{border-color:var(--cond);border-radius:50%}
+.lg.inc{border-color:var(--incident);border-radius:50%;width:18px}
+.lg.dash{border-style:dashed}
+.chart-scroll{overflow-x:auto;padding:10px 4px 18px}
+.chart-row{display:flex;align-items:flex-start;gap:0;min-height:120px}
+.ev-col{display:flex;flex-direction:column;align-items:center;min-width:215px;max-width:215px;position:relative}
+.ev-arrow{display:flex;align-items:center;align-self:flex-start;margin-top:44px;color:var(--muted);font-size:20px;padding:0 2px}
+.ev-card{width:205px;border:2.5px solid var(--event);border-radius:8px;background:#fff;padding:6px 8px;position:relative;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.ev-card.incident{border-color:var(--incident);border-radius:60px;background:#fff5f3;text-align:center}
+.ev-card.dashed{border-style:dashed}
+.ev-card.cf{box-shadow:0 0 0 3px rgba(230,126,34,.30)}
+.ev-card .time{font-size:10.5px;color:var(--muted);font-weight:600}
+.ev-card textarea{width:100%;border:none;background:transparent;font-size:12.5px;padding:2px 0;min-height:44px}
+.ev-card textarea:focus{outline:1px dashed #bcd}
+.cfflag{position:absolute;top:-13px;right:-9px;font-size:19px;color:var(--cf);cursor:pointer;text-shadow:0 1px 2px rgba(0,0,0,.25)}
+.itm-tools{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px}
+.itm-tools button{border:1px solid var(--line);background:#fafbfc;border-radius:4px;font-size:10.5px;padding:1px 6px;cursor:pointer;color:var(--muted)}
+.itm-tools button:hover{background:#eef2f6}
+.itm-tools button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.itm-tools button.cf-on{background:var(--cf);color:#fff;border-color:var(--cf)}
+.cond-stack{display:flex;flex-direction:column;gap:8px;margin-top:14px;align-items:center}
+.cond-card{width:196px;border:2.5px solid var(--cond);border-radius:50px;background:#fbfaff;padding:6px 12px;position:relative}
+.cond-card.dashed{border-style:dashed}
+.cond-card.cf{box-shadow:0 0 0 3px rgba(230,126,34,.30)}
+.cond-card textarea{width:100%;border:none;background:transparent;font-size:12px;min-height:38px;text-align:center}
+.cond-link{width:2px;height:12px;background:var(--cond);opacity:.5}
+.empty-note{color:var(--muted);font-style:italic;padding:30px;text-align:center}
+/* ---------- Causal factors / RCA ---------- */
+.cf-item{border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:10px;background:#fff}
+.cf-item .cf-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.badge.ev{background:#e3edf6;color:var(--event)}
+.badge.co{background:#ece6f6;color:var(--cond)}
+.badge.inc{background:#f8e5e1;color:var(--incident)}
+.badge.cfb{background:#fbe9d9;color:#b35c12}
+.badge.done{background:#e2f3e8;color:var(--ok)}
+.badge.todo{background:#fdf2d0;color:#8a6d00}
+.rc-tag{display:inline-block;background:var(--brand);color:#fff;border-radius:5px;padding:3px 9px;font-size:11.5px;margin:2px 3px 2px 0}
+.rc-tag .x{margin-left:6px;cursor:pointer;opacity:.75}
+.rc-tag .x:hover{opacity:1}
+.q15{border:1px solid var(--line);border-radius:8px;margin-bottom:8px;background:#fff;overflow:hidden}
+.q15 .qrow{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;cursor:pointer}
+.q15 .qrow:hover{background:#f7fafc}
+.q15 .qnum{background:var(--brand);color:#fff;border-radius:50%;min-width:22px;height:22px;line-height:22px;text-align:center;font-size:11.5px;font-weight:700}
+.q15 .qtext{flex:1}
+.q15 .qcats{font-size:11px;color:var(--muted);margin-top:3px}
+.q15 .yn{display:flex;gap:5px}
+.yn button{border:1px solid var(--line);background:#fff;border-radius:5px;padding:3px 11px;font-size:12px;cursor:pointer}
+.yn button.yes.on{background:var(--ok);color:#fff;border-color:var(--ok)}
+.yn button.no.on{background:#8a99a8;color:#fff;border-color:#8a99a8}
+.qhints{padding:0 12px 10px 44px;font-size:12px;color:var(--muted);display:none}
+.q15.open .qhints{display:block}
+.acc{border:1px solid var(--line);border-radius:8px;margin-bottom:10px;background:#fff;overflow:hidden}
+.acc>.acc-head{padding:11px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;background:#fafcfd}
+.acc>.acc-head:hover{background:#f0f5f8}
+.acc>.acc-head .t{font-weight:600;flex:1}
+.acc>.acc-body{padding:12px 14px;border-top:1px solid var(--line);display:none}
+.acc.open>.acc-body{display:block}
+.acc.recommended>.acc-head{background:#fdf6e0}
+.chev{transition:transform .15s;color:var(--muted)}
+.acc.open>.acc-head .chev{transform:rotate(90deg)}
+.nrc{border:1px solid #e3e9ef;border-radius:7px;margin:8px 0;overflow:hidden}
+.nrc>.nrc-head{padding:9px 12px;background:#f5f8fa;cursor:pointer;display:flex;gap:8px;align-items:center;font-weight:600;font-size:13px}
+.nrc>.nrc-body{padding:10px 12px;display:none}
+.nrc.open>.nrc-body{display:block}
+.rc-row{border-top:1px dashed #e3e9ef;padding:9px 2px;display:flex;gap:10px;align-items:flex-start}
+.rc-row:first-child{border-top:none}
+.rc-row input[type=checkbox]{margin-top:3px;transform:scale(1.15);accent-color:var(--brand)}
+.rc-row .rc-name{font-weight:600;cursor:pointer}
+.rc-row .rc-qs{font-size:12px;color:var(--muted);margin-top:4px;display:none}
+.rc-row.open .rc-qs{display:block}
+.rc-qs ul{margin:4px 0;padding-left:18px}
+.rc-qs li{margin:2px 0}
+.note-inline{font-size:11.5px;color:#8a6d00;background:#fdf6e0;border-radius:5px;padding:4px 8px;margin-top:5px}
+/* ---------- corrective actions ---------- */
+table.ca{width:100%;border-collapse:collapse;font-size:13px}
+table.ca th{background:#f0f4f8;text-align:left;padding:8px;border:1px solid var(--line);font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted)}
+table.ca td{border:1px solid var(--line);padding:6px;vertical-align:top}
+table.ca textarea{width:100%;border:none;min-height:36px;font-size:12.5px;background:transparent}
+table.ca input,table.ca select{width:100%;border:1px solid transparent;background:transparent}
+table.ca input:focus,table.ca select:focus{border-color:var(--line);background:#fff}
+/* ---------- report ---------- */
+#report-out{background:#fff;border:1px solid var(--line);border-radius:10px;padding:34px 44px;max-width:980px;margin:0 auto}
+#report-out h1{font-size:21px;color:var(--brand);border-bottom:3px solid var(--accent);padding-bottom:8px}
+#report-out h2{font-size:16px;color:var(--brand);margin-top:26px;border-bottom:1px solid var(--line);padding-bottom:4px}
+#report-out table{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0}
+#report-out th{background:#eef3f6;text-align:left;padding:6px 8px;border:1px solid #ccd5dd}
+#report-out td{border:1px solid #ccd5dd;padding:6px 8px;vertical-align:top}
+#report-out .meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 26px;font-size:13px}
+.modal-bg{position:fixed;inset:0;background:rgba(20,30,40,.5);display:none;align-items:center;justify-content:center;z-index:100}
+.modal-bg.show{display:flex}
+.modal{background:#fff;border-radius:10px;padding:20px;width:min(640px,92vw);max-height:86vh;overflow:auto}
+.flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.muted{color:var(--muted)}
+.right{margin-left:auto}
+footer{padding:14px;text-align:center;color:var(--muted);font-size:11px}
+@media print{
+  header.appbar,nav.steps,.no-print,footer,.ai-block{display:none!important}
+  body{background:#fff}
+  main{padding:0;max-width:none}
+  #report-out{border:none;padding:10px}
+  .panel{border:none}
+}
+</style>
+</head>
+<body class="theme-0">
+<header class="appbar">
+  <div>
+    <h1>🛡️ Risk2Safe</h1>
+    <div class="sub">Incident Investigation Workbench — SnapCharT® timeline → Causal Factors → Root Cause Tree® analysis → Corrective Actions</div>
+  </div>
+  <div class="spacer"></div>
+  <button class="btn ghost" onclick="openAISettings()" title="Configure OpenAI API key for AI reviews">🤖 AI setup</button>
+  <select id="inv-select" title="Switch investigation" style="max-width:230px"></select>
+  <button class="btn ghost" onclick="newInvestigation()">+ New</button>
+  <button class="btn ghost" onclick="exportJSON()">Export</button>
+  <button class="btn ghost" onclick="document.getElementById('import-file').click()">Import</button>
+  <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(event)">
+  <button class="btn ghost danger" onclick="deleteInvestigation()">Delete</button>
+</header>
+
+<nav class="steps" id="steps-nav">
+  <button data-step="0" class="active"><span class="num">1</span>Plan</button>
+  <button data-step="1"><span class="num">2</span>SnapCharT®</button>
+  <button data-step="2"><span class="num">3</span>Causal Factors</button>
+  <button data-step="3"><span class="num">4</span>Root Causes</button>
+  <button data-step="4"><span class="num">5</span>Corrective Actions</button>
+  <button data-step="5"><span class="num">6</span>Report</button>
+</nav>
+
+<main>
+<!-- STEP 0 : PLAN -->
+<section class="step-page" id="page-0">
+  <div class="panel">
+    <h2>Step 1 — Plan the Investigation</h2>
+    <p class="muted">Record the basic facts. Then start your <b>Spring SnapCharT®</b> (Step 2) to develop an initial picture of what happened, decide what evidence to collect, and list witnesses to interview.</p>
+    <div class="grid2">
+      <div class="field"><label>Investigation title</label><input type="text" id="m-title" placeholder="e.g., Operator hand injury at Line 3 conveyor"></div>
+      <div class="field"><label>Incident date &amp; time</label><input type="datetime-local" id="m-date"></div>
+      <div class="field"><label>Location / unit</label><input type="text" id="m-location" placeholder="Plant, area, equipment"></div>
+      <div class="field"><label>Lead investigator</label><input type="text" id="m-investigator"></div>
+      <div class="field"><label>Team members</label><input type="text" id="m-team"></div>
+      <div class="field"><label>Classification</label>
+        <select id="m-class">
+          <option value="">— select —</option>
+          <option>Injury / Illness</option><option>Near-miss</option><option>Process safety event</option>
+          <option>Environmental release</option><option>Equipment / asset damage</option><option>Quality issue</option><option>Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="field" style="margin-top:12px"><label>Short description of the incident (the worst thing that happened)</label>
+      <textarea id="m-desc" rows="3" placeholder="This becomes the Incident circle on your SnapCharT®."></textarea></div>
+    <h3>Evidence &amp; interview planning</h3>
+    <div class="grid2">
+      <div class="field"><label>Evidence to collect / preserve</label><textarea id="m-evidence" rows="4" placeholder="Broken parts, logbooks, CCTV, permits, charts, procedures in use..."></textarea></div>
+      <div class="field"><label>People to interview</label><textarea id="m-witnesses" rows="4" placeholder="Who knows what? In what order will you interview them?"></textarea></div>
+    </div>
+    <div class="hint"><b>Planning prompts from the methodology:</b> What fragile evidence needs immediate preservation? Who needs to be interviewed and in what order? What procedures and policies were (or should have been) used? What facts need two independent sources to verify? What are the legal/regulatory implications?</div>
+    <div class="ai-block no-print"><div class="ai-head">
+      <button class="btn ai" id="ai-btn-0" onclick="aiReview(0)">🤖 AI Review — investigation plan</button>
+      <span class="ai-tag">checks completeness of facts, evidence &amp; interview plan</span></div>
+      <div class="ai-out" id="ai-out-0"></div></div>
+  </div>
+</section>
+
+<!-- STEP 1 : SNAPCHART -->
+<section class="step-page" id="page-1" style="display:none">
+  <div class="panel">
+    <h2>Step 2 — Build the SnapCharT® (sequence of Events)</h2>
+    <p class="muted">Ask <i>“What happened next?”</i> — add <b>Events</b> (rectangles, “who did what”, active verbs, one action each) left → right in real time, before <i>and</i> after the <b>Incident</b> (circle — the worst event, the reason you are investigating). Attach <b>Conditions</b> (ovals, passive “was/were” statements — the rest of the story) under the Event they explain. Use <b>dashed</b> borders for unproven information, assumptions, and open questions; switch to solid when proven.</p>
+    <div class="chart-toolbar no-print">
+      <button class="btn primary" onclick="addItem('event')">+ Event</button>
+      <button class="btn" onclick="addItem('incident')">+ Incident ◯</button>
+      <span class="muted" style="font-size:12px">Select an Event card, then:</span>
+      <button class="btn" onclick="addCondition()">+ Condition (oval)</button>
+      <span class="right muted" id="chart-count"></span>
+    </div>
+    <div class="legend">
+      <span><span class="lg"></span> Event — action, “who did what”</span>
+      <span><span class="lg inc"></span> Incident — worst event</span>
+      <span><span class="lg cond"></span> Condition — “rest of the story”</span>
+      <span><span class="lg dash"></span> Dashed — unproven / assumption / question</span>
+      <span style="color:var(--cf)">▲ Causal Factor</span>
+    </div>
+    <div class="chart-scroll"><div class="chart-row" id="chart-row"></div></div>
+    <div class="hint warn"><b>Quality checks (Summer → Autumn SnapCharT®):</b> Is every Event factual, non-judgmental, and quantified where possible? Are date/times shown? Have you collected evidence to turn dashed shapes solid? Does the story flow without gaps? Conditions about procedures, training, quality checks, communications, policies, human engineering and work direction will drive the root cause analysis — capture them now.</div>
+    <div class="ai-block no-print"><div class="ai-head">
+      <button class="btn ai" id="ai-btn-1" onclick="aiReview(1)">🤖 AI Review — SnapCharT® quality</button>
+      <span class="ai-tag">flags gaps in the timeline, wording issues, missing Conditions &amp; unproven info</span></div>
+      <div class="ai-out" id="ai-out-1"></div></div>
+  </div>
+</section>
+
+<!-- STEP 2 : CAUSAL FACTORS -->
+<section class="step-page" id="page-2" style="display:none">
+  <div class="panel">
+    <h2>Step 3 — Define Causal Factors</h2>
+    <p class="muted">A <b>Causal Factor</b> is a mistake, error, or failure that, if corrected, could have <b>prevented the Incident or significantly mitigated its consequences</b> — typically a human error or an equipment malfunction. Most incidents have <i>multiple</i> Causal Factors.</p>
+    <div class="hint"><b>The 4-Step Method:</b> ① Identify <i>all</i> problems on the SnapCharT® (big and small — use the “problem?” toggle on each shape). ② Group related Conditions near the Event they impact. ③ Use the <b>“So what?”</b> method — start with each problem and ask “so what resulted from that?” until you reach an Event or the Incident. ④ The Causal Factor is that first Event or one–two “so whats” back: <i>Who did what wrong?</i> or <i>What equipment failed or didn’t work as intended?</i> Mark it with the ▲ triangle on the chart.</div>
+    <div id="cf-problem-list"></div>
+    <div id="cf-confirmed"></div>
+    <div class="ai-block no-print"><div class="ai-head">
+      <button class="btn ai" id="ai-btn-2" onclick="aiReview(2)">🤖 AI Review — causal factors</button>
+      <span class="ai-tag">checks the 4-Step Method: are these the right big-picture CFs? Any missed?</span></div>
+      <div class="ai-out" id="ai-out-2"></div></div>
+  </div>
+</section>
+
+<!-- STEP 3 : ROOT CAUSES -->
+<section class="step-page" id="page-3" style="display:none">
+  <div class="panel">
+    <h2>Step 4 — Analyze each Causal Factor with the Root Cause Tree®</h2>
+    <p class="muted">Analyze each Causal Factor <b>one at a time</b>. Start at the top of the tree, answer the dictionary questions honestly (“yes” = the category applies), and drill down to specific root causes. A Causal Factor may have one, several, or — rarely — no root causes.</p>
+    <div class="flex" style="margin-bottom:12px">
+      <label style="font-weight:600">Causal Factor under analysis:</label>
+      <select id="rca-cf-select" style="min-width:320px" onchange="renderRCA()"></select>
+    </div>
+    <div id="rca-body"></div>
+    <div class="ai-block no-print"><div class="ai-head">
+      <button class="btn ai" id="ai-btn-3" onclick="aiReview(3)">🤖 AI Review — root cause analysis</button>
+      <span class="ai-tag">validates 15-Question answers &amp; selected root causes against the chart evidence</span></div>
+      <div class="ai-out" id="ai-out-3"></div></div>
+  </div>
+</section>
+
+<!-- STEP 4 : CORRECTIVE ACTIONS -->
+<section class="step-page" id="page-4" style="display:none">
+  <div class="panel">
+    <h2>Step 5 — Develop &amp; track Corrective Actions</h2>
+    <p class="muted">Develop a fix for <b>every root cause</b>. Test each action against <b>SMARTER</b>: <b>S</b>pecific, <b>M</b>easurable, <b>A</b>ccountable, <b>R</b>easonable, <b>T</b>imely, <b>E</b>ffective, <b>R</b>eviewed. Prefer fixes that remove the hazard or improve the system over “re-train and remind”.</p>
+    <div id="ca-body"></div>
+    <div class="ai-block no-print"><div class="ai-head">
+      <button class="btn ai" id="ai-btn-4" onclick="aiReview(4)">🤖 AI Review — corrective actions</button>
+      <span class="ai-tag">SMARTER test for each action + stronger fixes up the hierarchy of controls</span></div>
+      <div class="ai-out" id="ai-out-4"></div></div>
+  </div>
+</section>
+
+<!-- STEP 5 : REPORT -->
+<section class="step-page" id="page-5" style="display:none">
+  <div class="no-print" style="max-width:980px;margin:0 auto 10px;display:flex;gap:8px;justify-content:flex-end;align-items:center">
+    <button class="btn primary" onclick="buildReport();window.print()">🖨 Print / Save as PDF</button>
+  </div>
+  <div class="ai-block no-print" style="max-width:980px;margin:0 auto 12px"><div class="ai-head">
+    <button class="btn ai" id="ai-btn-5" onclick="aiReview(5)">🤖 AI Review — full report</button>
+    <span class="ai-tag">end-to-end consistency check + drafts an executive summary you can paste in</span></div>
+    <div class="ai-out" id="ai-out-5"></div></div>
+  <div id="report-out"></div>
+</section>
+</main>
+<footer>Risk2Safe — single-file investigation tool for internal use. Methodology concepts: SnapCharT®, Root Cause Tree®, TapRooT® are registered marks of System Improvements, Inc. — refer to the official books for full guidance. AI reviews are advisory only; the investigator remains responsible for all conclusions.</footer>
+
+<div class="modal-bg" id="modal-bg"><div class="modal" id="modal-box"></div></div>
+<script>
+/* ================================================================
+   ROOT CAUSE TREE® DATA — condensed from the Root Cause Tree®
+   Dictionary (7th Ed.). "Yes" to a question means the category
+   applies to the Causal Factor being analyzed.
+   ================================================================ */
+
+const CAT_KEYS = { PROC:"Procedures", TRAIN:"Training", QC:"Quality Control", COMM:"Communications", MS:"Management System", HE:"Human Engineering", WD:"Work Direction" };
+
+/* ---------- Level 2: Human Performance Troubleshooting Guide (15 Questions) ---------- */
+const Q15 = [
+ {n:1, group:"Individual Performance", cats:["WD","HE"],
+  q:"Was a person excessively fatigued, impaired, upset, bored, distracted, or overwhelmed?",
+  hints:["Could a properly trained supervisor have detected the impairment (fatigue, substance abuse, personal problems) and kept the worker out of harm's way?","Was shift scheduling causing excessive fatigue? More than 16 hours worked in a row? Called in 8+ hours early? Sleep deprived / microsleep episodes?","Was the job so boring or uninteresting that the person stopped monitoring key indicators?","Were there so many alarms, signals, or tasks that the person was overloaded?"]},
+ {n:2, group:"Procedure Use", cats:["PROC"],
+  q:"Should the person have had and used a written procedure but did not?",
+  hints:["A 'procedure' = written step-by-step instructions read and followed DURING the work (not manuals/policies used only as reference — those are Management System).","Answer yes if: there was no procedure; no prompt/cue to use it; no requirement to use it; the person forgot; or a conscious decision was made not to use it or to deviate / skip steps; or the person worked from memory and omitted a step."]},
+ {n:3, group:"Procedure Use", cats:["PROC"],
+  q:"Was a mistake made while using a procedure?",
+  hints:["Was the procedure followed incorrectly? Did the person try to follow it but still err?","Was the wrong procedure or wrong revision used?","Was the procedure followed as written, but following it still caused the problem (procedure wrong / situation not covered)?","Did the way it was written cause confusion or misunderstanding?"]},
+ {n:4, group:"Human Engineering", cats:["HE"],
+  q:"Were alarms or displays needed to recognize or respond to a condition unavailable or misunderstood?",
+  hints:["Was information from alarms/displays insufficient or unclear?","Was important information obstructed or buried in excessive information?","Was an alarm/display not seen, not heard, or misunderstood?"]},
+ {n:5, group:"Human Engineering", cats:["HE","PROC","TRAIN"],
+  q:"Were displays, alarms, controls, tools, or equipment identified or operated improperly?",
+  hints:["Was a device, control, or equipment operated or set up improperly? Wrong tool/control used?","Was the person confused by similar but not identical equipment, tools, or controls?","Were equipment, tools or displays so complicated that they weren't used properly?"]},
+ {n:6, group:"Training", cats:["TRAIN","WD"],
+  q:"Did the person need more skill/knowledge to perform the job, respond to conditions, or understand system response?",
+  hints:["Was the person not qualified? Did they miss required training?","Would better initial or continuing training have provided the needed skill/knowledge?","Should the supervisor have covered likely problems in the pre-job brief, or walked through an infrequent task?"]},
+ {n:7, group:"Work Environment", cats:["HE","WD"],
+  q:"Was work performed in an adverse environment (hot, cold, humid, dark, cramped, wet, noisy, or hazardous)?",
+  hints:["Did environmental conditions increase risk or make the task harder?","Did the person rush because of the environment (e.g., heat, cold, radiation)?","Trouble seeing? Too little room? Poor housekeeping? Inadequate safeguards for hazards?"]},
+ {n:8, group:"Work Environment", cats:["HE"],
+  q:"Did work involve repetitive motion, uncomfortable positions, vibration, or heavy lifting?",
+  hints:["Was the issue an overuse/musculoskeletal injury (back, knee, carpal tunnel)?","Could better ergonomic design have prevented it?"]},
+ {n:9, group:"Team Performance", cats:["COMM","WD"],
+  q:"Did verbal communications or shift change (turnover) play a role in this problem?",
+  hints:["Was communication involved in the issue at all?","Did a shift change or work turnover occur during the sequence being analyzed?"]},
+ {n:10, group:"Team Performance", cats:["COMM","WD"],
+  q:"Did failure to agree about the who/what/when/where of performing the job play a role?",
+  hints:["Did the people involved fail to agree on what was to be done, by whom, when, where?","Did someone misunderstand, mis-hear, or act on something they thought they heard?","Did someone act alone when teamwork was required?"]},
+ {n:11, group:"Team Performance", cats:["COMM","MS"],
+  q:"Was communication needed across organizational boundaries or with other facilities?",
+  hints:["Did communication between organizations/departments/facilities not occur or break down?","Was there a misunderstanding in cross-organizational handoffs (e.g., admitting → treating unit, contractor → operations)?"]},
+ {n:12, group:"Management System", cats:["MS","WD"],
+  q:"Was a task performed in a hurry or a shortcut used?",
+  hints:["Was there unusual pressure to complete the job? Did rushing lead to shortcuts?","Were policies/procedures/rules bypassed or violated?","Should more time or more people have been scheduled to reduce the workload?"]},
+ {n:13, group:"Management System", cats:["MS"],
+  q:"Had management been warned of this problem, or had it happened before?",
+  hints:["Did this issue happen before and corrective action should have prevented recurrence (or was ineffective / backlogged)?","Was management informed of the risk but chose to work without additional safeguards?","Should trending have identified the repetitive issue? Did employee complaints fail to reach the right level?"]},
+ {n:14, group:"Management System", cats:["MS"],
+  q:"Were policies, administrative controls, or procedures not used, missing, or in need of improvement?",
+  hints:["Were policies not fully complied with, creatively misinterpreted, or consciously violated?","Should there have been a policy/procedure (other facilities have one) but there wasn't?","Did policies fail to meet government, industry, or corporate standards?"]},
+ {n:15, group:"Quality Control", cats:["QC"],
+  q:"Should an independent quality control check have caught the problem?",
+  hints:["Should this task have required an independent QC hold point / inspection before proceeding?","Was an independent check performed that failed to catch the problem?","(Self-checking does not count — this is about formal, independent inspection.)"]}
+];
+
+/* ---------- Levels 3-5: Basic Cause Categories ---------- */
+const CATEGORIES = {
+
+PROC: { name:"Procedures",
+ gate:"Would performance improve if a well-written procedure had been used correctly?",
+ gateHints:["A 'procedure' is a written step-by-step description read and followed during the work.","Was a procedure not used when it should have been? Consciously not followed? Followed incorrectly? Wrong?","NOTE: if better human-factors design would have prevented the issue, analyze under Human Engineering; if reasonable extra training was the need, analyze under Training."],
+ nrcs:[
+  {name:"Not Used / Not Followed",
+   def:["Was the task done without a procedure when one should have been used?","If a required procedure was consciously not followed, also consider Management System – SPAC Not Used."],
+   rcs:[
+    {name:"no procedure", qs:["Was there no procedure for the job, but one should have existed?","Tasks that warrant procedures: unacceptable consequences if not done exactly right, need documentation, heavy short-term memory load, performed infrequently, or performed under stress/interruptions."]},
+    {name:"procedure not available or inconvenient for use", qs:["Was the procedure not handy for use (no copy in the work area)?","Was it inconvenient to use because of working conditions (tight quarters, contamination zones, protective clothing)?"]},
+    {name:"procedure difficult to use", qs:["Did workers consider the procedure too difficult to use and decide not to use it (cumbersome, can't be understood, impossible to perform as written, poorly sequenced)?"]},
+    {name:"procedure use not required but should be", qs:["A procedure exists but its use is not required — should it be required (in-hand, checklist style) given the significance of the job?","Did policy allow deviation without adequate review and approval?"]}
+   ]},
+  {name:"Wrong",
+   def:["Was the procedure used, but it was factually wrong, didn't cover the situation, or was the wrong revision?"],
+   rcs:[
+    {name:"typo", qs:["Was a typographical error in the procedure responsible for the issue?"]},
+    {name:"sequence wrong", qs:["Were tasks/steps not sequenced according to technical necessity and the physical layout of the equipment?"]},
+    {name:"facts wrong", qs:["Were steps factually incorrect (improper instructions, numerical values, wrong equipment names/numbers, improper set-up)?"]},
+    {name:"situation not covered", qs:["Did the procedure fail to address situations that reasonably should have been expected to occur?"]},
+    {name:"wrong revision used", qs:["Was the wrong revision in use (printing delays, old revisions not discarded, temporary changes not entered)?"]},
+    {name:"second checker needed", qs:["Because of the risk, should the procedure have required an independent second check of an action, but it didn't?"]}
+   ]},
+  {name:"Followed Incorrectly",
+   def:["The person tried to follow the procedure but made a mistake — did not do what the procedure writer intended.","Do NOT use if the person consciously deviated, didn't have the procedure, or worked from memory (see Not Used/Not Followed)."],
+   rcs:[
+    {name:"format confusing", qs:["Could the layout/format not be easily, rapidly, precisely read and understood?","Confusing IF…THEN logic, poor grouping/indentation, wordy notes & warnings, unfamiliar abbreviations, too-high reading grade level?"]},
+    {name:"> 1 action per step", qs:["Did a step contain more than one action, leading to an action being skipped?","Was a step written in paragraph format rather than crisp single-action statements?"]},
+    {name:"excess references", qs:["Did the procedure refer to too many other procedures, causing confusion, lost place, or omitted steps?"]},
+    {name:"multiple unit references", qs:["Did references to multiple plants/units in one step cause confusion (e.g., '65 in. (40 in. at Unit 2)')?"]},
+    {name:"limits NI", qs:["Were limits expressed as '± tolerance' instead of absolute ranges (e.g., '1.39 ± 0.69' instead of '0.70 to 2.08')?"]},
+    {name:"details NI", qs:["Was the level of detail inappropriate for the training/experience of the users?","Did one written action actually require several unwritten steps from memory?"]},
+    {name:"data/computations wrong or incomplete", qs:["Was an error made recording/transferring data or in calculations?","Were formulas not as simple as possible, or no space provided for calculations?"]},
+    {name:"graphics NI", qs:["Was an error made using unclear, confusing, or misleading graphs/illustrations/drawings?","Did procedure drawings disagree with reference drawings or the actual plant?"]},
+    {name:"no checkoff", qs:["Did separate critical actions lack checkoff spaces to guard against omitting steps?"]},
+    {name:"checkoff misused", qs:["Was a checkoff misused (e.g., several steps checked off at once rather than step-by-step)?"]},
+    {name:"misused second check", qs:["Was a required second check not performed, or performed in a non-independent manner?"]},
+    {name:"ambiguous instructions", qs:["Were instructions written so they could be interpreted in more than one way?","Did imprecise language lead to misinterpretation of the work?"]},
+    {name:"equipment identification NI", qs:["Did equipment identification/labels in the field not agree with the identification used in the procedure?"]}
+   ]}
+ ]},
+
+TRAIN: { name:"Training",
+ gate:"Should the person have had better training to understand the task, develop the skill, or maintain the knowledge/skills needed?",
+ gateHints:["Applies to any training method: lecture, self-study, OJT, computer-based.","If better design would prevent the issue → Human Engineering. If a pre-job brief should have made training unnecessary → Work Direction. If a procedure could reduce the training need → Procedures."],
+ nrcs:[
+  {name:"No Training",
+   def:["Was no training provided for a task that should have had training?","Did the person miss required training?"],
+   rcs:[
+    {name:"task not analyzed", qs:["Was training not offered because no (or an incomplete) task analysis failed to recognize the need for training on this task, knowledge, or skill?"]},
+    {name:"decided not to train", qs:["Was a conscious decision made not to provide training (task too infrequent, judged too simple)?","If so, should pre-job briefs or walk-thrus have compensated? (consider Work Direction – Preparation)"]},
+    {name:"no learning objective", qs:["Were there no written learning objectives for the knowledge/skills required, so the person never learned what was needed?"]},
+    {name:"missed required training", qs:["Did the person miss required training and therefore lack the knowledge or skills?","Was there no follow-up to ensure missed training was made up? (also consider Management System)"]}
+   ]},
+  {name:"Understanding NI",
+   def:["Training was provided, but the issue was caused by not understanding the task/system because training was somehow inadequate.","Was a person allowed to pass and qualify without the required knowledge or skills?"],
+   rcs:[
+    {name:"learning objective NI", qs:["Did written learning objectives fail to provide adequate coverage of an important task — actions required, influencing factors, criteria for success?"]},
+    {name:"lesson plan NI", qs:["Was the lesson plan not plant-specific, technically inaccurate, or missing objectives, media, references, units of instruction, or evaluation methods?"]},
+    {name:"instruction NI", qs:["Was the presentation of training inadequate (instructor performance, lesson plans disregarded, materials unavailable/wrong, pace too fast/slow)?","Did materials fail to state the actions, the conditions, and the standard of acceptable performance?"]},
+    {name:"practice/repetition NI", qs:["Was training not repeated/practised enough for skills to be sharpened and embedded in long-term memory (simulator time, supervised practice)?"]},
+    {name:"testing NI", qs:["Should testing have caught a skill/knowledge deficiency before the person worked fully qualified?","Did testing fail to ensure mastery of required skills/knowledge?"]},
+    {name:"continuing training NI", qs:["Was continuing training/retraining too infrequent or inadequate, so skills/knowledge were lost over time?","Were equipment/procedure changes or lessons learned not incorporated into the training program promptly?"]}
+   ]}
+ ]},
+
+QC: { name:"Quality Control",
+ gate:"Should formal, independent inspection of the work have caught the problem?",
+ gateHints:["Focus is formal, independent inspection — NOT self-checking or broad quality programs (those are Management System).","Was the work so critical or mistake-prone that someone should have been 'looking over the shoulder' or inspecting every time?"],
+ nrcs:[
+  {name:"No Inspection",
+   def:["Were QC checks / functional tests / quality verifications not required — or required but not performed?"],
+   rcs:[
+    {name:"inspection not required", qs:["Was inspection not performed because it wasn't required — but should have been, given the safety or production significance?","(If no policy required inspection, also consider Management System – SPAC NI.)"]},
+    {name:"no hold point", qs:["Was an inspection required, but the procedure/work plan did not include an inspection hold point (when one could have been specified)?"]},
+    {name:"hold point not performed", qs:["Was a specified inspection hold point skipped, deleted, ignored, or overlooked?","(If required by policy/procedure, also consider Management System – SPAC Not Used.)"]}
+   ]},
+  {name:"QC NI",
+   def:["An inspection/verification was performed or specified, but a deficiency in it caused the problem to be missed."],
+   rcs:[
+    {name:"inspection instructions NI", qs:["Were the inspection/test instructions inadequate — too little detail, didn't look for this error, unclear about what to verify?","Could improving the instructions help catch this type of issue?"]},
+    {name:"inspection techniques NI", qs:["Was the inspection specified beyond the capability of the technique or measurement device?","Did the technique fail to isolate the proper item to ensure post-inspection performance?"]},
+    {name:"foreign material exclusion during work NI", qs:["Was control of the work inadequate to prevent foreign material/debris entering inaccessible or uninspectable locations (e.g., gearboxes, manifolds)?"]}
+   ]}
+ ]},
+
+COMM: { name:"Communications",
+ gate:"Did a verbal communication error or lack of communication between people performing work cause the issue?",
+ gateHints:["Includes misunderstood instructions, missing feedback, and inadequate shift/work turnover.","Poor teamwork → Work Direction – crew teamwork NI. Management's employee communications → Management System. Written procedures → Procedures."],
+ nrcs:[
+  {name:"No Communication or Not Timely",
+   def:["Was the issue caused by failure to communicate, or by communicating too late?"],
+   rcs:[
+    {name:"communication system NI", qs:["Did no method/system exist for the needed communication?","Was the voice communication system inadequate for expected traffic (channels jammed) or so poor in quality that communication wasn't attempted?"]},
+    {name:"late communication", qs:["Were communications too late because events happened too fast, or time constraints inhibited taking time to communicate?"]}
+   ]},
+  {name:"Turnover NI",
+   def:["Did incorrect, incomplete, or inadequate turnover of information at shift relief or work handover cause or fail to prevent an error?"],
+   rcs:[
+    {name:"no standard turnover process", qs:["Did turnover fail because informal methods were used?","Would a written, formal turnover with standard required content have prevented the failure (e.g., things forgotten that would have been written down)?"]},
+    {name:"turnover process not used", qs:["Was a standard turnover process required but not used — and could it have prevented the issue?","(If required by policy, also consider Management System – SPAC Not Used.)"]},
+    {name:"turnover process NI", qs:["Could the existing turnover process be improved to prevent this kind of issue?"]}
+   ]},
+  {name:"Misunderstood Verbal Communication",
+   def:["Did someone misunderstand or misinterpret what was said?"],
+   rcs:[
+    {name:"standard terminology not used", qs:["Would standard/accepted terminology have made the communication reliable?","Was a slang term used and misunderstood?"]},
+    {name:"standard terminology NI", qs:["Did names of two items sound alike or get easily confused?","Did one item have two names, or two items share one name?"]},
+    {name:"repeat back not used", qs:["Was the issue caused by failure to repeat back a message to verify it was heard and understood correctly?"]},
+    {name:"long message", qs:["Was a message too long to be accurately understood/remembered — should it have been broken into parts or written down?"]},
+    {name:"noisy environment", qs:["Did background noise interfere with the listener's understanding (radios, PA, phones, ambient plant noise)?"]}
+   ]}
+ ]},
+
+MS: { name:"Management System",
+ gate:"Could the issue have been prevented by better standards/policies/administrative controls (SPAC), better enforcement of them, better oversight & audits, or effective corrective action for known problems?",
+ gateHints:["Be sure of the facts — cite specific policies, standards, and exact wording.","Covers: missing/weak/confusing SPAC; SPAC not used; audit & employee-relations failures; failure to correct known deficiencies."],
+ nrcs:[
+  {name:"Standards, Policies, or Admin Controls (SPAC) NI",
+   def:["Was a new SPAC needed, or were existing SPAC confusing, incomplete, not strict enough, technically wrong, or otherwise inadequate?"],
+   rcs:[
+    {name:"no SPAC", qs:["Did a law require a company SPAC that didn't exist?","Was the work significant/complicated enough to warrant a SPAC but none was available?","Do similar facilities have SPAC for this type of work?"]},
+    {name:"not strict enough", qs:["Were existing SPAC too lenient to ensure quality/safety/control, or more lenient than laws, regulations, or industry standards?","Did the SPAC require frequent 'interpretation' allowing lower standards?"]},
+    {name:"confusing or incomplete", qs:["Were the SPAC confusing, hard to interpret, contradictory, incomplete, or not specific enough?","Did the SPAC fail to address situations it should have?"]},
+    {name:"technical error", qs:["Did a technical error or incorrect facts in the SPAC contribute to the issue?"]},
+    {name:"drawings / prints NI", qs:["Were drawings/prints incorrect, not updated, or not reflecting 'as built' conditions?"]}
+   ]},
+  {name:"SPAC Not Used",
+   def:["Were SPAC not used, not adhered to, not followed, or intentionally followed incorrectly?"],
+   rcs:[
+    {name:"communication of SPAC NI", qs:["Were standards/policies not communicated down through the organization?","Did people not understand the SPAC, or not understand they were responsible for compliance, because it was inadequately communicated (formally or by management example)?"]},
+    {name:"recently changed", qs:["Did recent changes in standards or directives cause confusion about the SPAC?"]},
+    {name:"enforcement NI", qs:["Was enforcement inconsistent or lax — noncompliance accepted, rule-breaking ignored, deviation without concurrence common?","Was there a reward for NOT following the SPAC (time saved, comfort, peer recognition) with no greater reward for following it?","Did supervision fail to coach workers when problems were noticed?"]},
+    {name:"no way to implement", qs:["Was no practical method of implementing the SPAC provided (impractical given time, staffing, resources)?"]},
+    {name:"accountability NI", qs:["Was no one clearly responsible/answerable for this application of the SPAC?","Did people believe someone else was accountable?","Was there no way for management to verify the SPAC was followed (signatures, checkboxes, peer checks)?"]}
+   ]},
+  {name:"Oversight / Employee Relations",
+   def:["Did management fail to hear about the issue, fail to audit/evaluate, or fail to create the culture needed to prevent it?"],
+   rcs:[
+    {name:"infrequent audits & evaluations", qs:["Were audits/evaluations performed too infrequently to detect the system or equipment deficiencies?","(Use only where it's reasonable to expect an audit/evaluation system for the affected system.)"]},
+    {name:"audits & evaluations lack depth", qs:["Did audits fail to dig deep enough to detect the deficiency that a reasonably in-depth audit should have found?"]},
+    {name:"audits & evaluations not independent", qs:["Would an independent audit (by someone other than the system owner) probably have detected and corrected the issue, while internal/self audits did not?"]},
+    {name:"employee communications NI", qs:["Did management's communications fail to convey their concern for quality, safety, and environment — or were words and actions inconsistent?","Did low morale or production-over-safety pressure contribute (shortcuts, 'management only notices when I do wrong')?"]},
+    {name:"employee feedback NI", qs:["Did employee concerns fail to reach a management level that could act?","No formal feedback program? Concerns argued away? Fear of reprisal for reporting? No prompt feedback to reporters?"]}
+   ]},
+  {name:"Corrective Action",
+   def:["Was the issue caused by failure to provide effective corrective action for KNOWN deficiencies (recurring failures)?","If you select a Corrective Action root cause, ALSO find and record the cause of the original failure."],
+   rcs:[
+    {name:"corrective action NI", qs:["Was corrective action for a known deficiency not recommended, disregarded, or only addressing symptoms instead of root causes?","Did a cheaper/different action fail to fix the issue? Should an effectiveness review have detected the failed corrective action?"]},
+    {name:"corrective action not yet implemented", qs:["Was an approved corrective action not implemented in a reasonable time before the issue recurred (funding/design delays, no tracking, lack of emphasis)?","Were interim compensatory actions missing while awaiting the final fix?"]},
+    {name:"trending NI", qs:["Would better trending of problems/failures have revealed a generic (systemic) issue that, if corrected, could have prevented this one?","Was a significant trend missed for lack of proper statistical trending techniques?"]}
+   ]}
+ ]},
+
+HE: { name:"Human Engineering",
+ gate:"Did the human-machine interface, the work environment, system complexity, or a non-fault-tolerant system set the person up to fail?",
+ gateHints:["Poor design that causes human error is analyzed here (not under equipment Design).","Would a more user-friendly design, better labels/displays/controls/tools, or a better environment have prevented the issue?"],
+ nrcs:[
+  {name:"Human-Machine Interface",
+   def:["Was the issue caused by poor interaction between people and equipment/systems — ergonomics, labels, displays, controls, tools, layout?"],
+   rcs:[
+    {name:"labels NI", qs:["Were labels or warning signs missing, hard to read, obscured, ambiguous, inconsistent with procedures, or not distinguishing similar items/units?","Was the equipment setting or default mode unclear because items weren't labeled?"]},
+    {name:"arrangement / placement", qs:["Did the physical location of equipment, displays, or controls contribute (hard to reach/read, control-display relationship unclear, easy to bump, identical bins side-by-side, view blocked, awkward postures)?"]},
+    {name:"displays NI", qs:["Were displays/gauges/alarms confusing, missing essential information, poorly scaled, requiring conversions, or unclear about equipment state?","Was a needed alarm absent, ignored due to nuisance alarms, or buried among excessive alarms?","Did computer menus/printouts confuse or mislead?"]},
+    {name:"controls NI", qs:["Were controls complex, similar and easily confused, lacking mistake-proofing, lacking feedback, contrary to expectation (e.g., clockwise to increase flow), hard to use with PPE, or missing emergency stops / machine safety devices?"]},
+    {name:"monitoring alertness NI", qs:["Did vigilance fade during long monitoring (watching a stable indicator > 20–30 min) so a signal was missed?"]},
+    {name:"plant / unit differences", qs:["Did similar-but-not-identical equipment, displays, or controls between units/plants/models cause a mistake (different default modes, layouts, operations)?"]},
+    {name:"excessive lifting / force", qs:["Did the task require excessive lifting or force, repetitive motion, or vibration leading to the problem (see NIOSH lifting guidelines)?"]},
+    {name:"tools & instruments NI", qs:["Was a hand tool/instrument so difficult, badly shaped, high-force, or high-vibration that it caused an error or musculoskeletal problem?","Did its construction cause inaccurate performance, or did the person choose an easier but inappropriate tool?"]}
+   ]},
+  {name:"Work Environment",
+   def:["Was the work environment not conducive to good performance — housekeeping, temperature, footing, lighting, noise, obstructions, cramped space, radiation/contamination?"],
+   rcs:[
+    {name:"housekeeping NI", qs:["Did poor housekeeping contribute (tripping over trash/tools that should have been put away)?"]},
+    {name:"hot / cold", qs:["Did excessive heat or cold exposure degrade performance, or did hurrying to escape the temperature contribute?"]},
+    {name:"wet / slippery", qs:["Was a slippery surface left untreated, not cleaned up, or not isolated (including rain/ice that should have been removed)?"]},
+    {name:"lights NI", qs:["Did bad lighting (too much, too little, glare) contribute to the issue?"]},
+    {name:"noisy", qs:["Did excessive noise degrade performance — couldn't hear an alarm, couldn't concentrate, distracted?"]},
+    {name:"obstruction", qs:["Did a protruding obstruction in a walkway/workspace cause a strike or trip hazard (other than housekeeping)?"]},
+    {name:"cramped quarters", qs:["Was the workspace too small to perform the work or to access a control/adjustment, or did it stress the musculoskeletal system?"]},
+    {name:"equipment guard NI", qs:["Was hazardous equipment/machinery/process unguarded (or inadequately guarded) to protect the general workforce, visitors, or the public?"]},
+    {name:"high radiation / contamination", qs:["Did high radiation or toxic/hazardous contamination cause hurrying to reduce exposure, or require protective clothing that diminished performance?"]}
+   ]},
+  {name:"Complex System",
+   def:["Was the system excessively complex — confusing responses, too many variables at once?"],
+   rcs:[
+    {name:"knowledge-based decision required", qs:["Did a complex system require a knowledge-based decision with little support from procedures or training?","Could better design, a good procedure, or training reasonably remove the need for this higher-level decision?"]},
+    {name:"monitoring too many items", qs:["Were personnel required to monitor too many items/variables at once (rule of thumb: 3+ simultaneously is probably too many), causing needed information to be missed?"]}
+   ]},
+  {name:"Non-Fault Tolerant System",
+   def:["Did the system fail to make errors detectable or recoverable?"],
+   rcs:[
+    {name:"errors not detectable", qs:["Were errors not detectable (alarm, meter, visible indication, audible warning) during or after their occurrence — for important safety-related equipment?"]},
+    {name:"errors not recoverable", qs:["Once discovered, could the error not be corrected before the incident occurred? (Important safety systems should allow recovery of detected errors.)"]}
+   ]}
+ ]},
+
+WD: { name:"Work Direction",
+ gate:"Identify the supervisor / person-in-charge. Was the issue caused by inadequate preparation (planning, permits, briefings), assigning the wrong worker, or inadequate supervision during work?",
+ gateHints:["Only expect REASONABLE amounts of preparation and supervision — not 20/20 foresight.","Was a pre-job brief, walk-thru, scheduling, lock out/tag out, or fall protection inadequate? Was an impaired or unqualified worker assigned? Was teamwork poor?"],
+ nrcs:[
+  {name:"Preparation",
+   def:["Was preparation/planning for the job (work package, permit, hazard/risk assessment, briefing, scheduling, LOTO, fall protection) inadequate?"],
+   rcs:[
+    {name:"no preparation", qs:["Did the supervisor/person-in-charge provide NO preparation (instructions, job plan, walk-thru) for the work?","(If there was preparation but it needed improvement, use a more specific root cause below.)"]},
+    {name:"work package / permit NI", qs:["Was the job plan/work package/permit inadequate — wrong equipment/site/methods, wrong sequence, missing coordination, missing safety precautions, wrong procedure referenced, missing LOTO/PPE/safeguards, missing or inadequate acceptance criteria, or non-compliant with rules?"]},
+    {name:"pre-job briefing NI", qs:["Was no pre-job brief held when one was needed?","Did the brief omit important information or fail to highlight critical (irrecoverable) steps?","Did people who should have attended miss it?"]},
+    {name:"walk-thru NI", qs:["For an infrequent, complex, or high-risk task — did the supervisor not walk workers through the steps, equipment locations, and sequence on the actual equipment (or simulator)?"]},
+    {name:"scheduling NI", qs:["Did rushing from excessive workload cause a mistake that wouldn't otherwise have happened?","Too few workers assigned? Excessive overtime / illegal hours / >16 h worked / called in 8+ h early?","Was testing/surveillance scheduled too infrequently or incompatibly with operations?"]},
+    {name:"lock out / tag out NI", qs:["Was a lock out required but not performed, inadequate, or not covering all energy sources?","Was a lock removed while work was in progress?","(Policy inadequate → MS–SPAC NI; policy violated → MS–SPAC Not Used.)"]},
+    {name:"fall protection NI", qs:["Was fall protection required but not used, inadequate, incorrectly applied, or without adequate anchor points?","Did workers not know about the requirement (consider Training too)?"]}
+   ]},
+  {name:"Selection of Worker",
+   def:["Did the supervisor assign a worker who was not capable for this job — and was it reasonable for the supervisor to have detected it?"],
+   rcs:[
+    {name:"not qualified", qs:["Did the employee err because they were not fully qualified (license, certification, competency, credentials) for the task?","Were unqualified workers assigned because qualified ones weren't available?"]},
+    {name:"fatigued", qs:["Did excessive overtime, second jobs, sleep disorders, or visible fatigue (microsleep, automatic behavior) cause the difficulty — and should the supervisor have detected it and re-assigned the work?","Did the worker report fatigue but was not relieved?"]},
+    {name:"upset", qs:["Was the worker emotionally upset (or known personal-life problems) and the supervisor should have detected this before assigning precision or safety-related work?"]},
+    {name:"substance abuse", qs:["Were capabilities impaired by alcohol/drugs or performance-degrading medications, and the supervisor was (or should have been) aware?"]},
+    {name:"team selection NI", qs:["Was the wrong mix of expertise/experience assigned?","Known personal conflicts, physical incapability, or pre-existing conditions/injuries that should have precluded the assignment?"]}
+   ]},
+  {name:"Supervision During Work",
+   def:["Was a reasonable level of supervision NOT provided during the job, considering its risk and importance?"],
+   rcs:[
+    {name:"no supervision", qs:["Was there no supervision at the job site, and would a reasonable level of supervision have prevented the issue?","(If there WAS supervision that needed improvement, note it at this level or use crew teamwork NI.)"]},
+    {name:"crew teamwork NI", qs:["Did team members fail to question improper readings/directions because of someone's forcefulness?","Were directions understood to be improper but carried out without questioning?","Did the team fixate on one problem and lose the big picture?","Did peers or the supervisor notice a problem but leave it uncorrected (no coaching)?"]}
+   ]}
+ ]}
+};
+
+/* ---------- Equipment Difficulty branch ---------- */
+const EQUIP = {
+ gate:"Did the equipment break, wear out, or fail (bad part, bad design, no/poor PM, software failure)?",
+ gateHints:["If the failure was caused by improper operation/maintenance/installation, use far beyond design intent, or a design causing human error → analyze as Human Performance Difficulty instead.","If failure information is incomplete, troubleshoot first (e.g., Equifactor®-style troubleshooting tables) before analyzing."],
+ nrcs:[
+  {name:"Design",
+   def:["Was the equipment/software designed in-house (or with your engineers' participation) and the difficulty was due to design specs, design not anticipating problems, or design review failures?"],
+   rcs:[
+    {name:"design specs NI", qs:["Was the malfunction caused by incorrect, inadequate, or incomplete design specifications or basic data?","Were appropriate design standards not used or incorrectly applied?"]},
+    {name:"design not to specs", qs:["Were the specifications correct, but the design did not meet them?","(If design review should have caught it, also analyze Design Review.)"]},
+    {name:"problem not anticipated", qs:["Did the designer fail to anticipate problems that should have been expected during the equipment's service lifetime (including component failures or upset conditions for software)?"]},
+    {name:"equipment environment not considered", qs:["Did the designer fail to consider the equipment's operating environment (e.g., vapors degrading gaskets, weather exposure)?"]},
+    {name:"independent review NI", qs:["For safety/reliability/quality-significant designs — was independent design review inadequate, missing, or done by the wrong people at the wrong time?"]},
+    {name:"management of change (MOC) NI", qs:["Did a design change warrant an MOC review that was not performed or was inadequate (PSM/RMP or equivalent), failing to detect hazards created by the change?"]},
+    {name:"hazard analysis NI", qs:["Was a required hazard analysis of the process not performed or not sufficient to detect hazards that should have been recognized and corrected?"]}
+   ]},
+  {name:"Equipment / Parts Defective",
+   def:["Was the part/equipment/software defective BEFORE installation (manufacturing, procurement, handling, storage), or were quality checks before installation inadequate?"],
+   rcs:[
+    {name:"procurement NI", qs:["Were defective or improper parts/equipment/software obtained because of problems in the procurement process?"]},
+    {name:"manufacturing NI", qs:["Were defective parts delivered by a vendor due to manufacturing problems, or software delivered with obvious bugs?"]},
+    {name:"handling NI", qs:["Were parts/equipment/software media damaged during shipping or handling (incl. packaging) before installation?"]},
+    {name:"storage NI", qs:["Were items damaged during storage, or past their storage shelf life?"]},
+    {name:"quality control (receipt/installation checks)", qs:["Were quality checks before/at installation inadequate? → Analyze using the Quality Control category questions (No Inspection / QC NI)."]}
+   ]},
+  {name:"Preventive / Predictive Maintenance",
+   def:["Should a reasonable PM / RCM / RBI program have prevented the malfunction?","If a program existed but was NOT used → Human Performance Difficulty."],
+   rcs:[
+    {name:"no PM for equipment", qs:["Was there no PM scheduled for the failed equipment/software although vendor recommendations or industry/operating experience indicated it was needed?"]},
+    {name:"PM for equipment NI", qs:["Was PM/RBI scheduled too infrequently for vendor recommendations and operating experience?","Was PM done on some components but not others that needed it? Was better PM available but unused?"]}
+   ]},
+  {name:"Repeat Failure → Corrective Action",
+   def:["Was this failure known to have occurred before, frequently and long enough ago that it should have been recognized as repetitive and corrected?","If selected, ALSO find the original cause (PM, Design, or Parts Defective)."],
+   rcs:[
+    {name:"corrective action NI", qs:["Was corrective action for the known failure not recommended, disregarded, symptomatic only, or under-scoped — or did its failure go undetected for lack of an effectiveness review?"]},
+    {name:"corrective action not yet implemented", qs:["Was an identified corrective action (e.g., design improvement) not implemented in reasonable time before recurrence, without interim compensatory actions?"]},
+    {name:"trending NI", qs:["Would better trending of failures have revealed the systemic problem in time to prevent this failure?"]}
+   ]},
+  {name:"Tolerable Failure",
+   def:["Were the consequences minor AND would fixing the cause cost more than the benefit — so no corrective action is planned?","Record it for trending. Do NOT use if PM, corrective action, design, QC, parts, or human performance would reasonably have prevented it."],
+   rcs:[
+    {name:"tolerable failure (record & trend)", qs:["Failure accepted as tolerable — no corrective action planned; trend to detect repeat failures."]}
+   ]}
+ ]
+};
+
+const LEVEL1 = [
+ {key:"HPD", name:"Human Performance Difficulty", desc:"Work performed incorrectly / omitted / forgotten, false assumptions, broken rules, incorrect calculations — if a person had done something differently, the issue would have been prevented or reduced."},
+ {key:"EQ", name:"Equipment Difficulty", desc:"Equipment broke, wore out, or failed: bad part, bad design, no/poor PM, or software failure. (Improper operation/maintenance/installation = Human Performance Difficulty.)"},
+ {key:"ND", name:"Natural Disaster / Sabotage", desc:"Tornado, flood, earthquake, lightning etc. that could not reasonably be protected against — or deliberate malicious action intended to cause harm."},
+ {key:"OT", name:"Other (specify)", desc:"Insufficient detail to determine the cause, or not covered by other categories. Record everything known and why no cause could be identified."}
+];
+</script>
+<script>
+/* ================= state & persistence ================= */
+const LS_KEY = "taproot_investigations_v1";
+let store = { investigations: [], currentId: null };
+let state = null;        // current investigation
+let selectedItem = null; // selected snapchart item id
+let currentStep = 0;
+
+function uid(){ return Math.random().toString(36).slice(2,10); }
+function esc(s){ return (s||"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+function blankInv(title){
+  return { id: uid(), created: new Date().toISOString(),
+    meta:{title:title||"Untitled investigation",date:"",location:"",investigator:"",team:"",cls:"",desc:"",evidence:"",witnesses:""},
+    items:[], analyses:{}, actions:[] };
+}
+function loadStore(){
+  try{ const raw = localStorage.getItem(LS_KEY); if(raw) store = JSON.parse(raw); }catch(e){}
+  if(!store.investigations || !store.investigations.length){
+    const inv = blankInv("My first investigation");
+    store = { investigations:[inv], currentId: inv.id };
+  }
+  state = store.investigations.find(i=>i.id===store.currentId) || store.investigations[0];
+  store.currentId = state.id;
+}
+function save(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(store)); }catch(e){}
+}
+function switchInv(id){
+  const inv = store.investigations.find(i=>i.id===id);
+  if(inv){ state = inv; store.currentId = id; save(); renderAll(); }
+}
+function newInvestigation(){
+  const name = prompt("Title for the new investigation:","New investigation");
+  if(name===null) return;
+  const inv = blankInv(name||"Untitled investigation");
+  store.investigations.push(inv); store.currentId = inv.id; state = inv;
+  save(); renderAll();
+}
+function deleteInvestigation(){
+  if(store.investigations.length===1){ alert("This is the only investigation. Create another before deleting."); return; }
+  if(!confirm(`Delete "${state.meta.title}" permanently?`)) return;
+  store.investigations = store.investigations.filter(i=>i.id!==state.id);
+  state = store.investigations[0]; store.currentId = state.id;
+  save(); renderAll();
+}
+function exportJSON(){
+  const blob = new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = (state.meta.title||"investigation").replace(/[^\w\- ]+/g,"").trim().replace(/\s+/g,"_")+".risk2safe.json";
+  a.click(); URL.revokeObjectURL(a.href);
+}
+function importJSON(ev){
+  const f = ev.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{ try{
+      const inv = JSON.parse(r.result);
+      if(!inv.meta || !inv.items) throw new Error("Not a valid investigation file");
+      inv.id = uid();
+      store.investigations.push(inv); store.currentId = inv.id; state = inv;
+      save(); renderAll();
+    }catch(e){ alert("Import failed: "+e.message); } };
+  r.readAsText(f); ev.target.value = "";
+}
+
+/* ================= navigation ================= */
+document.getElementById("steps-nav").addEventListener("click", e=>{
+  const b = e.target.closest("button[data-step]"); if(!b) return;
+  gotoStep(+b.dataset.step);
+});
+function gotoStep(n){
+  currentStep = n;
+  document.body.className = "theme-"+n;
+  document.querySelectorAll("#steps-nav button").forEach(b=>b.classList.toggle("active", +b.dataset.step===n));
+  document.querySelectorAll(".step-page").forEach((p,i)=>p.style.display = i===n ? "" : "none");
+  if(n===2) renderCF();
+  if(n===3) renderRCASelect();
+  if(n===4) renderCA();
+  if(n===5) buildReport();
+}
+
+/* ================= meta (step 0) ================= */
+const metaMap = {"m-title":"title","m-date":"date","m-location":"location","m-investigator":"investigator","m-team":"team","m-class":"cls","m-desc":"desc","m-evidence":"evidence","m-witnesses":"witnesses"};
+function bindMeta(){
+  Object.entries(metaMap).forEach(([id,key])=>{
+    const el = document.getElementById(id);
+    el.value = state.meta[key]||"";
+    el.oninput = ()=>{ state.meta[key]=el.value; if(key==="title") renderInvSelect(); save(); };
+  });
+}
+function renderInvSelect(){
+  const sel = document.getElementById("inv-select");
+  sel.innerHTML = store.investigations.map(i=>`<option value="${i.id}" ${i.id===state.id?"selected":""}>${esc(i.meta.title||"Untitled")}</option>`).join("");
+  sel.onchange = ()=>switchInv(sel.value);
+}
+
+/* ================= SnapCharT (step 1) ================= */
+function addItem(type){
+  if(type==="incident" && state.items.some(i=>i.type==="incident")){
+    alert("There is already an Incident on the chart. (The Incident is the single worst event — the reason for the investigation.)");
+    return;
+  }
+  const it = { id: uid(), type, parent:null, time:"", text:"", dashed:type!=="incident", problem:false, cf:false };
+  if(type==="incident"){ it.dashed=false; it.text = state.meta.desc ? state.meta.desc.slice(0,120) : ""; }
+  const idx = selectedItem ? state.items.findIndex(i=>i.id===selectedItem && !i.parent) : -1;
+  if(idx>=0) state.items.splice(idx+1,0,it); else state.items.push(it);
+  selectedItem = it.id;
+  save(); renderChart();
+}
+function addCondition(){
+  const host = state.items.find(i=>i.id===selectedItem && (i.type==="event"||i.type==="incident"));
+  if(!host){ alert("Click an Event (or the Incident) first to select it, then add the Condition under it."); return; }
+  state.items.push({ id: uid(), type:"condition", parent: host.id, time:"", text:"", dashed:true, problem:false, cf:false });
+  save(); renderChart();
+}
+function delItem(id){
+  const it = state.items.find(i=>i.id===id);
+  if(!it) return;
+  const kids = state.items.filter(i=>i.parent===id).length;
+  if(!confirm(`Delete this ${it.type}${kids?` and its ${kids} condition(s)`:""}?`)) return;
+  state.items = state.items.filter(i=>i.id!==id && i.parent!==id);
+  delete state.analyses[id];
+  state.actions = state.actions.filter(a=>a.cfId!==id);
+  if(selectedItem===id) selectedItem=null;
+  save(); renderChart();
+}
+function moveItem(id,dir){
+  const seq = state.items.filter(i=>!i.parent);
+  const pos = seq.findIndex(i=>i.id===id);
+  const np = pos+dir;
+  if(pos<0||np<0||np>=seq.length) return;
+  const a = state.items.indexOf(seq[pos]), b = state.items.indexOf(seq[np]);
+  [state.items[a],state.items[b]] = [state.items[b],state.items[a]];
+  save(); renderChart();
+}
+function toggleProp(id,prop){
+  const it = state.items.find(i=>i.id===id); if(!it) return;
+  it[prop] = !it[prop];
+  if(prop==="cf" && it.cf) it.problem = true;
+  if(prop==="cf" && !it.cf){ delete state.analyses[id]; state.actions = state.actions.filter(a=>a.cfId!==id); }
+  save(); renderChart();
+}
+function setItemField(id,field,val){
+  const it = state.items.find(i=>i.id===id); if(it){ it[field]=val; save(); }
+}
+function selectItem(id){ selectedItem=id; renderChart(); }
+
+function itemTools(it){
+  return `<div class="itm-tools">
+    <button class="${it.dashed?'on':''}" title="Dashed = unproven / assumption / question" onclick="event.stopPropagation();toggleProp('${it.id}','dashed')">${it.dashed?'unproven':'proven'}</button>
+    <button class="${it.problem?'on':''}" title="Mark as a problem that contributed to the Incident" onclick="event.stopPropagation();toggleProp('${it.id}','problem')">problem?</button>
+    ${it.type!=="incident"?`<button class="${it.cf?'cf-on':''}" title="Mark as Causal Factor (▲)" onclick="event.stopPropagation();toggleProp('${it.id}','cf')">▲ CF</button>`:""}
+    ${!it.parent?`<button onclick="event.stopPropagation();moveItem('${it.id}',-1)" title="Move left">◀</button>
+    <button onclick="event.stopPropagation();moveItem('${it.id}',1)" title="Move right">▶</button>`:""}
+    <button onclick="event.stopPropagation();delItem('${it.id}')" title="Delete">✕</button>
+  </div>`;
+}
+function renderChart(){
+  const row = document.getElementById("chart-row");
+  const seq = state.items.filter(i=>!i.parent);
+  if(!seq.length){
+    row.innerHTML = `<div class="empty-note">Start your Spring SnapCharT®: add the <b>Incident</b> (the worst thing that happened), then add the Events before and after it. Sketch what you know — dashed shapes mark what still needs proving.</div>`;
+  } else {
+    row.innerHTML = seq.map((ev,i)=>{
+      const conds = state.items.filter(c=>c.parent===ev.id);
+      const inc = ev.type==="incident";
+      return `${i>0?'<div class="ev-arrow">➜</div>':''}
+      <div class="ev-col">
+        <div class="ev-card ${inc?'incident':''} ${ev.dashed?'dashed':''} ${ev.cf?'cf':''}"
+             style="${selectedItem===ev.id?'outline:2px solid var(--accent);outline-offset:2px':''}"
+             onclick="selectItem('${ev.id}')">
+          ${ev.cf?'<span class="cfflag" title="Causal Factor">▲</span>':''}
+          <input class="time" type="text" placeholder="date / time" value="${esc(ev.time)}" style="border:none;background:transparent;width:100%;font-size:10.5px;color:var(--muted);font-weight:600" onclick="event.stopPropagation()" oninput="setItemField('${ev.id}','time',this.value)">
+          <textarea placeholder="${inc?'INCIDENT — worst event':'Who did what? (active verb)'}" onclick="event.stopPropagation()" oninput="setItemField('${ev.id}','text',this.value)">${esc(ev.text)}</textarea>
+          ${itemTools(ev)}
+        </div>
+        ${conds.length?'<div class="cond-link"></div>':''}
+        <div class="cond-stack">
+          ${conds.map(c=>`
+            <div class="cond-card ${c.dashed?'dashed':''} ${c.cf?'cf':''}">
+              ${c.cf?'<span class="cfflag" title="Causal Factor">▲</span>':''}
+              <textarea placeholder="Condition — was / were ... (passive)" oninput="setItemField('${c.id}','text',this.value)">${esc(c.text)}</textarea>
+              ${itemTools(c)}
+            </div>`).join("")}
+        </div>
+      </div>`;
+    }).join("");
+  }
+  const nE = seq.filter(i=>i.type==="event").length, nC = state.items.filter(i=>i.type==="condition").length,
+        nP = state.items.filter(i=>i.problem).length, nCF = state.items.filter(i=>i.cf).length;
+  document.getElementById("chart-count").textContent = `${nE} events · ${state.items.some(i=>i.type==="incident")?1:0} incident · ${nC} conditions · ${nP} problems · ${nCF} causal factors`;
+}
+
+/* ================= Causal Factors (step 2) ================= */
+function cfLabel(it){
+  return it.text ? (it.text.length>90 ? it.text.slice(0,90)+"…" : it.text) : "(no description yet)";
+}
+function renderCF(){
+  const probs = state.items.filter(i=>i.problem && !i.cf);
+  const cfs = state.items.filter(i=>i.cf);
+  document.getElementById("cf-problem-list").innerHTML = `
+    <h3>Problems identified on the chart (potential Causal Factors)</h3>
+    ${probs.length? probs.map(p=>`
+      <div class="cf-item"><div class="cf-head">
+        <span class="badge ${p.type==='condition'?'co':p.type==='incident'?'inc':'ev'}">${p.type}</span>
+        <span style="flex:1">${esc(cfLabel(p))}</span>
+        <button class="btn small" onclick="toggleProp('${p.id}','cf');renderCF()">Promote to Causal Factor ▲</button>
+      </div>
+      <div class="muted" style="font-size:12px;margin-top:6px">Ask “so what resulted from this?” — follow the chain to the first Event / the Incident. Is this the big-picture problem (<i>who did what wrong</i> / <i>what equipment failed</i>)? If yes, promote it.</div>
+      </div>`).join("")
+    : `<div class="muted" style="padding:8px 2px">No unpromoted problems. Go to the SnapCharT® and toggle <b>problem?</b> on every Event/Condition that contributed to the Incident — big or small.</div>`}`;
+  document.getElementById("cf-confirmed").innerHTML = `
+    <h3>Confirmed Causal Factors (${cfs.length})</h3>
+    ${cfs.length? cfs.map(c=>{
+      const an = state.analyses[c.id];
+      const done = an && ((an.selected&&an.selected.length)||an.otherNote);
+      return `<div class="cf-item"><div class="cf-head">
+        <span style="color:var(--cf);font-size:17px">▲</span>
+        <span class="badge ${c.type==='condition'?'co':'ev'}">${c.type}</span>
+        <span style="flex:1;font-weight:600">${esc(cfLabel(c))}</span>
+        <span class="badge ${done?'done':'todo'}">${done? (an.selected?an.selected.length:0)+" root cause(s)":"analysis pending"}</span>
+        <button class="btn small" onclick="openRCA('${c.id}')">Analyze root causes →</button>
+        <button class="btn small danger" onclick="toggleProp('${c.id}','cf');renderCF()">Demote</button>
+      </div></div>`;}).join("")
+    : `<div class="muted" style="padding:8px 2px">None yet. Most incidents have <b>multiple</b> Causal Factors — typically one per failed Safeguard.</div>`}`;
+}
+function openRCA(cfId){ gotoStep(3); document.getElementById("rca-cf-select").value = cfId; renderRCA(); }
+
+/* ================= Root Cause Analysis (step 3) ================= */
+function getAnalysis(cfId){
+  if(!state.analyses[cfId]) state.analyses[cfId] = { level1:null, q15:{}, openCats:{}, selected:[], otherNote:"" };
+  const a = state.analyses[cfId];
+  if(!a.q15) a.q15={}; if(!a.selected) a.selected=[]; if(!a.openCats) a.openCats={};
+  return a;
+}
+function renderRCASelect(){
+  const cfs = state.items.filter(i=>i.cf);
+  const sel = document.getElementById("rca-cf-select");
+  const cur = sel.value;
+  sel.innerHTML = cfs.length? cfs.map(c=>`<option value="${c.id}">▲ ${esc(cfLabel(c))}</option>`).join("") : `<option value="">— no causal factors defined yet (Step 3) —</option>`;
+  if(cfs.some(c=>c.id===cur)) sel.value = cur;
+  renderRCA();
+}
+function recommendedCats(an){
+  const rec = new Set();
+  Q15.forEach(q=>{ if(an.q15[q.n]==="yes") q.cats.forEach(c=>rec.add(c)); });
+  return rec;
+}
+function rcKey(cat,nrc,rc){ return `${cat} → ${nrc} → ${rc}`; }
+function isSelected(an,key){ return an.selected.some(s=>s.key===key); }
+function toggleRC(cfId,cat,nrc,rc){
+  const an = getAnalysis(cfId);
+  const key = rcKey(cat,nrc,rc);
+  if(isSelected(an,key)){
+    an.selected = an.selected.filter(s=>s.key!==key);
+    state.actions = state.actions.filter(a=>!(a.cfId===cfId && a.rc===key));
+  } else {
+    an.selected.push({key, cat, nrc, rc});
+  }
+  save(); renderRCA();
+}
+function setQ15(cfId,n,val){
+  const an = getAnalysis(cfId);
+  an.q15[n] = an.q15[n]===val ? undefined : val;
+  save(); renderRCA();
+}
+function setLevel1(cfId,key){
+  const an = getAnalysis(cfId);
+  an.level1 = an.level1===key? null : key;
+  save(); renderRCA();
+}
+function toggleCat(cfId,k){ const an=getAnalysis(cfId); an.openCats[k]=!an.openCats[k]; save(); renderRCA(); }
+function toggleNode(el){ el.parentElement.classList.toggle("open"); }
+
+function rcRow(cfId,catName,nrcName,rc,an){
+  const key = rcKey(catName,nrcName,rc.name);
+  const sel = isSelected(an,key);
+  return `<div class="rc-row ${sel?'open':''}">
+    <input type="checkbox" ${sel?"checked":""} onchange="toggleRC('${cfId}',${JSON.stringify(catName)},${JSON.stringify(nrcName)},${JSON.stringify(rc.name)})">
+    <div style="flex:1">
+      <span class="rc-name" onclick="this.closest('.rc-row').classList.toggle('open')">${esc(rc.name)} <span class="muted" style="font-weight:400;font-size:11px">(show questions)</span></span>
+      <div class="rc-qs"><ul>${rc.qs.map(q=>`<li>${esc(q)}</li>`).join("")}</ul></div>
+    </div></div>`;
+}
+function catBlock(cfId,catKeyOrName,cat,an,recommended,openKey){
+  const open = !!an.openCats[openKey];
+  return `<div class="acc ${open?'open':''} ${recommended?'recommended':''}">
+    <div class="acc-head" onclick="toggleCat('${cfId}','${openKey}')">
+      <span class="chev">▶</span><span class="t">${esc(cat.name||catKeyOrName)}</span>
+      ${recommended?'<span class="badge cfb">recommended by 15 Questions</span>':''}
+      <span class="badge ${an.selected.some(s=>s.cat===(cat.name||catKeyOrName))?'done':'todo'}">${an.selected.filter(s=>s.cat===(cat.name||catKeyOrName)).length||"no"} selected</span>
+    </div>
+    <div class="acc-body">
+      <div class="hint"><b>Gate question:</b> ${esc(cat.gate)}${cat.gateHints?`<ul style="margin:6px 0 0;padding-left:18px">${cat.gateHints.map(h=>`<li>${esc(h)}</li>`).join("")}</ul>`:""}</div>
+      ${cat.nrcs.map(nrc=>`
+        <div class="nrc">
+          <div class="nrc-head" onclick="toggleNode(this)"><span class="chev">▶</span> ${esc(nrc.name)} <span class="muted" style="font-weight:400;font-size:11px">— near root cause</span></div>
+          <div class="nrc-body">
+            ${nrc.def?`<div class="note-inline">${nrc.def.map(esc).join(" · ")}</div>`:""}
+            ${nrc.rcs.map(rc=>rcRow(cfId,(cat.name||catKeyOrName),nrc.name,rc,an)).join("")}
+          </div>
+        </div>`).join("")}
+    </div></div>`;
+}
+function renderRCA(){
+  const cfId = document.getElementById("rca-cf-select").value;
+  const body = document.getElementById("rca-body");
+  const cf = state.items.find(i=>i.id===cfId && i.cf);
+  if(!cf){ body.innerHTML = `<div class="empty-note">Define Causal Factors in Step 3 first — then analyze each one here.</div>`; return; }
+  const an = getAnalysis(cfId);
+  const conds = state.items.filter(i=>i.parent===cf.id || (cf.parent && i.id===cf.parent));
+  let html = `
+   <div class="hint"><b>Causal Factor:</b> ${esc(cf.text||"(no text)")} ${cf.time?`<span class="muted">@ ${esc(cf.time)}</span>`:""}
+   ${conds.length?`<br><span class="muted" style="font-size:11.5px">Related chart info: ${conds.map(c=>esc(c.text||"")).join(" • ")}</span>`:""}
+   <br><span class="muted" style="font-size:11.5px">Include all Conditions attached to this Causal Factor in the analysis.</span></div>
+   <h3>Level 1 — Top of the tree: what kind of difficulty is this?</h3>
+   <div class="grid2">` +
+   LEVEL1.map(l=>`
+     <div class="cf-item" style="cursor:pointer;${an.level1===l.key?'border-color:var(--brand);box-shadow:0 0 0 2px rgba(13,92,99,.25)':''}" onclick="setLevel1('${cfId}','${l.key}')">
+       <div class="flex"><input type="radio" ${an.level1===l.key?"checked":""} style="accent-color:var(--brand)"> <b>${l.name}</b></div>
+       <div class="muted" style="font-size:12px;margin-top:4px">${l.desc}</div>
+     </div>`).join("") + `</div>`;
+
+  if(an.level1==="HPD"){
+    const rec = recommendedCats(an);
+    html += `<h3>Level 2 — Human Performance Troubleshooting Guide (the 15 Questions)</h3>
+      <p class="muted" style="font-size:12.5px">Answer every question. Each <b>Yes</b> tells you which Basic Cause Categories to analyze below. Click a question to see the dictionary guidance.</p>`;
+    html += Q15.map(q=>{
+      const v = an.q15[q.n];
+      return `<div class="q15 ${v==="yes"?"open":""}">
+        <div class="qrow" onclick="this.parentElement.classList.toggle('open')">
+          <span class="qnum">${q.n}</span>
+          <div class="qtext">${esc(q.q)}<div class="qcats">${q.group} → if YES analyze: <b>${q.cats.map(c=>CAT_KEYS[c]).join(", ")}</b></div></div>
+          <div class="yn">
+            <button class="yes ${v==="yes"?"on":""}" onclick="event.stopPropagation();setQ15('${cfId}',${q.n},'yes')">Yes</button>
+            <button class="no ${v==="no"?"on":""}" onclick="event.stopPropagation();setQ15('${cfId}',${q.n},'no')">No</button>
+          </div>
+        </div>
+        <div class="qhints"><ul>${q.hints.map(h=>`<li>${esc(h)}</li>`).join("")}</ul></div>
+      </div>`;}).join("");
+    const answered = Q15.filter(q=>an.q15[q.n]).length;
+    html += `<div class="hint ${answered<15?'warn':''}">${answered}/15 answered · Recommended categories: <b>${[...rec].map(c=>CAT_KEYS[c]).join(", ")||"none yet — answer the questions"}</b>. You may still open any category if you judge it relevant.</div>
+      <h3>Levels 3–5 — Basic Cause Categories → Near Root Causes → Root Causes</h3>`;
+    const order = [...Object.keys(CATEGORIES)].sort((a,b)=>(rec.has(b)?1:0)-(rec.has(a)?1:0));
+    html += order.map(k=>catBlock(cfId,k,CATEGORIES[k],an,rec.has(k),"cat_"+k)).join("");
+  }
+  if(an.level1==="EQ"){
+    html += `<h3>Equipment Difficulty branch</h3>` +
+      catBlock(cfId,"Equipment Difficulty",{name:"Equipment Difficulty",gate:EQUIP.gate,gateHints:EQUIP.gateHints,nrcs:EQUIP.nrcs},an,true,"cat_EQ");
+  }
+  if(an.level1==="ND" || an.level1==="OT"){
+    html += `<h3>${an.level1==="ND"?"Natural Disaster / Sabotage":"Other"}</h3>
+      <div class="hint">${an.level1==="ND"
+        ? "Record the nature of the disaster or the malicious act. If the facility's design should reasonably have protected against it (e.g., lightning rods in a storm-prone area), consider analyzing as Equipment Difficulty (Design) or Human Performance Difficulty instead. Horseplay without intent to harm → Human Performance Difficulty."
+        : "Record as much information about the cause as possible: what was done to identify a cause, and why no specific cause on the tree could be identified."}</div>
+      <div class="field"><label>Findings / justification</label>
+      <textarea rows="4" oninput="getAnalysis('${cfId}').otherNote=this.value;save()">${esc(an.otherNote||"")}</textarea></div>`;
+  }
+  if(an.selected.length){
+    html += `<h3>Root causes identified for this Causal Factor</h3><div>` +
+      an.selected.map(s=>`<span class="rc-tag">${esc(s.key)} <span class="x" onclick="toggleRC('${cfId}',${JSON.stringify(s.cat)},${JSON.stringify(s.nrc)},${JSON.stringify(s.rc)})">✕</span></span>`).join("") +
+      `</div><div class="hint" style="margin-top:10px">Now develop a corrective action for <b>each</b> root cause in Step 5.</div>`;
+  }
+  body.innerHTML = html;
+}
+
+/* ================= Corrective Actions (step 4) ================= */
+function ensureActions(){
+  state.items.filter(i=>i.cf).forEach(cf=>{
+    const an = state.analyses[cf.id];
+    if(!an) return;
+    (an.selected||[]).forEach(s=>{
+      if(!state.actions.some(a=>a.cfId===cf.id && a.rc===s.key))
+        state.actions.push({id:uid(), cfId:cf.id, rc:s.key, action:"", owner:"", due:"", status:"Open"});
+    });
+    if(an.otherNote && !(an.selected&&an.selected.length) && !state.actions.some(a=>a.cfId===cf.id && a.rc==="(category finding)"))
+      state.actions.push({id:uid(), cfId:cf.id, rc:"(category finding)", action:"", owner:"", due:"", status:"Open"});
+  });
+}
+function addExtraAction(){
+  const cfs = state.items.filter(i=>i.cf);
+  state.actions.push({id:uid(), cfId:cfs.length?cfs[0].id:"", rc:"(general)", action:"", owner:"", due:"", status:"Open"});
+  save(); renderCA();
+}
+function setAction(id,field,val){ const a=state.actions.find(x=>x.id===id); if(a){a[field]=val;save();} }
+function delAction(id){ state.actions = state.actions.filter(a=>a.id!==id); save(); renderCA(); }
+function renderCA(){
+  ensureActions(); save();
+  const body = document.getElementById("ca-body");
+  if(!state.actions.length){ body.innerHTML = `<div class="empty-note">No root causes selected yet — complete Step 4 first. Rows appear here automatically for every selected root cause.</div>`; return; }
+  body.innerHTML = `<table class="ca"><thead><tr>
+      <th style="width:18%">Causal factor</th><th style="width:21%">Root cause</th><th>Corrective action (SMARTER)</th>
+      <th style="width:11%">Owner</th><th style="width:10%">Due</th><th style="width:9%">Status</th><th style="width:34px"></th></tr></thead><tbody>` +
+    state.actions.map(a=>{
+      const cf = state.items.find(i=>i.id===a.cfId);
+      return `<tr>
+        <td>${cf?("▲ "+esc(cfLabel(cf))):"<i class='muted'>unlinked</i>"}</td>
+        <td style="font-size:12px">${esc(a.rc)}</td>
+        <td><textarea placeholder="What will change, who is accountable, by when, and how will effectiveness be verified?" oninput="setAction('${a.id}','action',this.value)">${esc(a.action)}</textarea></td>
+        <td><input type="text" value="${esc(a.owner)}" oninput="setAction('${a.id}','owner',this.value)"></td>
+        <td><input type="date" value="${esc(a.due)}" oninput="setAction('${a.id}','due',this.value)"></td>
+        <td><select onchange="setAction('${a.id}','status',this.value)">${["Open","In progress","Implemented","Verified effective"].map(s=>`<option ${a.status===s?"selected":""}>${s}</option>`).join("")}</select></td>
+        <td><button class="btn small danger" onclick="delAction('${a.id}')">✕</button></td>
+      </tr>`;}).join("") +
+    `</tbody></table>
+    <div style="margin-top:10px"><button class="btn" onclick="addExtraAction()">+ Add another action</button></div>
+    <div class="hint" style="margin-top:10px"><b>Hierarchy of fixes (most → least effective):</b> remove the hazard / error-proof the design → guards & safeguards → warnings, alarms & displays → procedures & administrative controls → training & reminders. Prefer the highest practical level.</div>`;
+}
+
+/* ================= Report (step 5) ================= */
+function buildReport(){
+  const m = state.meta;
+  const seq = state.items.filter(i=>!i.parent);
+  const cfs = state.items.filter(i=>i.cf);
+  const out = document.getElementById("report-out");
+  const dt = m.date? new Date(m.date).toLocaleString() : "—";
+  let html = `<h1>Incident Investigation Report</h1>
+   <div class="meta-grid">
+     <div><b>Title:</b> ${esc(m.title)||"—"}</div><div><b>Incident date/time:</b> ${dt}</div>
+     <div><b>Location:</b> ${esc(m.location)||"—"}</div><div><b>Classification:</b> ${esc(m.cls)||"—"}</div>
+     <div><b>Lead investigator:</b> ${esc(m.investigator)||"—"}</div><div><b>Team:</b> ${esc(m.team)||"—"}</div>
+     <div style="grid-column:1/-1"><b>Report generated:</b> ${new Date().toLocaleString()}</div>
+   </div>
+   <h2>1. Incident description</h2><p>${esc(m.desc)||"<i>not recorded</i>"}</p>`;
+  html += `<h2>2. Sequence of events (SnapCharT®)</h2>
+   <table><tr><th style="width:14%">Date/Time</th><th style="width:12%">Type</th><th>Description</th><th style="width:18%">Flags</th></tr>` +
+   seq.map(ev=>{
+     const conds = state.items.filter(c=>c.parent===ev.id);
+     const flag = it=>[it.dashed?"unproven":"",it.cf?"CAUSAL FACTOR ▲":it.problem?"problem":""].filter(Boolean).join(", ");
+     return `<tr><td>${esc(ev.time)||""}</td><td><b>${ev.type==="incident"?"INCIDENT":"Event"}</b></td><td>${esc(ev.text)}</td><td>${flag(ev)}</td></tr>` +
+       conds.map(c=>`<tr><td></td><td style="padding-left:18px">Condition</td><td style="font-style:italic">${esc(c.text)}</td><td>${flag(c)}</td></tr>`).join("");
+   }).join("") + `</table>`;
+  html += `<h2>3. Causal factors &amp; root causes</h2>`;
+  if(!cfs.length) html += `<p><i>No causal factors defined.</i></p>`;
+  cfs.forEach((cf,i)=>{
+    const an = state.analyses[cf.id]||{};
+    const l1 = LEVEL1.find(l=>l.key===an.level1);
+    html += `<h3 style="margin-bottom:4px">CF-${i+1} ▲ ${esc(cf.text||"")}</h3>
+      <p style="margin:2px 0"><b>Type:</b> ${l1?l1.name:"<i>not analyzed</i>"}</p>`;
+    if(an.level1==="HPD"){
+      const yes = Q15.filter(q=>(an.q15||{})[q.n]==="yes");
+      html += `<p style="margin:2px 0"><b>15-Question screen — “Yes” answers:</b> ${yes.length? yes.map(q=>`Q${q.n}`).join(", "):"none recorded"}</p>`;
+    }
+    if(an.selected && an.selected.length){
+      html += `<table><tr><th>Basic cause category</th><th>Near root cause</th><th>Root cause</th></tr>` +
+        an.selected.map(s=>`<tr><td>${esc(s.cat)}</td><td>${esc(s.nrc)}</td><td><b>${esc(s.rc)}</b></td></tr>`).join("") + `</table>`;
+    } else if(an.otherNote){
+      html += `<p><b>Findings:</b> ${esc(an.otherNote)}</p>`;
+    } else {
+      html += `<p><i>Root cause analysis pending.</i></p>`;
+    }
+  });
+  html += `<h2>4. Corrective actions</h2>`;
+  if(state.actions.length){
+    html += `<table><tr><th>#</th><th>Causal factor</th><th>Root cause</th><th>Corrective action</th><th>Owner</th><th>Due</th><th>Status</th></tr>` +
+      state.actions.map((a,i)=>{
+        const cf = state.items.find(x=>x.id===a.cfId);
+        return `<tr><td>${i+1}</td><td>${cf?esc(cfLabel(cf)):""}</td><td>${esc(a.rc)}</td><td>${esc(a.action)}</td><td>${esc(a.owner)}</td><td>${esc(a.due)}</td><td>${esc(a.status)}</td></tr>`;
+      }).join("") + `</table>`;
+  } else html += `<p><i>No corrective actions recorded.</i></p>`;
+  html += `<h2>5. Evidence &amp; interviews</h2>
+    <p><b>Evidence collected/preserved:</b><br>${esc(m.evidence).replace(/\n/g,"<br>")||"—"}</p>
+    <p><b>Interviews:</b><br>${esc(m.witnesses).replace(/\n/g,"<br>")||"—"}</p>
+    <p style="margin-top:26px;font-size:11px;color:#777">Prepared with Risk2Safe — Incident Investigation Workbench. SnapCharT®, Root Cause Tree® and TapRooT® are registered trademarks of System Improvements, Inc.</p>`;
+  out.innerHTML = html;
+}
+
+/* ================= AI review (OpenAI) ================= */
+const AI_LS = "risk2safe_ai_settings";
+function getAI(){ try{ return JSON.parse(localStorage.getItem(AI_LS))||{}; }catch(e){ return {}; } }
+function saveAISettings(){
+  const o = { key: document.getElementById("ai-key").value.trim(),
+              model: document.getElementById("ai-model").value };
+  localStorage.setItem(AI_LS, JSON.stringify(o));
+  closeModal();
+}
+function clearAIKey(){ localStorage.removeItem(AI_LS); closeModal(); }
+function showModal(html){ document.getElementById("modal-box").innerHTML = html; document.getElementById("modal-bg").classList.add("show"); }
+function closeModal(){ document.getElementById("modal-bg").classList.remove("show"); }
+document.getElementById("modal-bg").addEventListener("click", e=>{ if(e.target.id==="modal-bg") closeModal(); });
+function openAISettings(){
+  const ai = getAI();
+  showModal(`
+   <h2 style="margin:0 0 6px;color:#5a2ea6">🤖 AI Review setup</h2>
+   <p class="muted" style="font-size:12.5px">Enter your <b>OpenAI API key</b> (create one at platform.openai.com → API keys). The key is stored <b>only in this browser</b> (localStorage) and is sent <b>only to api.openai.com</b> when you click an AI Review button. The investigation text is included in the prompt — do not use AI review for incidents whose details you may not share externally.</p>
+   <div class="field"><label>OpenAI API key</label><input type="password" id="ai-key" placeholder="sk-..." value="${esc(ai.key||"")}"></div>
+   <div class="field" style="margin-top:10px"><label>Model</label>
+     <select id="ai-model">
+       ${["gpt-4o-mini","gpt-4o","gpt-4.1-mini","gpt-4.1"].map(m=>`<option ${ (ai.model||"gpt-4o-mini")===m?"selected":"" }>${m}</option>`).join("")}
+     </select></div>
+   <div class="flex" style="margin-top:16px;justify-content:flex-end">
+     <button class="btn danger" onclick="clearAIKey()">Remove key</button>
+     <button class="btn" onclick="closeModal()">Cancel</button>
+     <button class="btn primary" onclick="saveAISettings()">Save</button>
+   </div>`);
+}
+function mdLite(s){
+  let h = esc(s);
+  h = h.replace(/^###?#?\s*(.+)$/gm,"<h4>$1</h4>");
+  h = h.replace(/\*\*(.+?)\*\*/g,"<b>$1</b>");
+  h = h.replace(/(^|\n)\s*[-*]\s+(.+)/g,"$1<li>$2</li>");
+  h = h.replace(/(<li>[\s\S]+?<\/li>)(?!\s*<li>)/g,"<ul>$1</ul>").replace(/<\/li>\s*<li>/g,"</li><li>");
+  h = h.replace(/\n{2,}/g,"<br><br>").replace(/\n/g,"<br>");
+  h = h.replace(/<br>\s*<ul>/g,"<ul>").replace(/<\/ul>\s*<br>/g,"</ul>");
+  return h;
+}
+function snapText(){
+  const seq = state.items.filter(i=>!i.parent);
+  return seq.map((ev,i)=>{
+    const f = it=>[it.dashed?"UNPROVEN":"",it.problem?"problem":"",it.cf?"CAUSAL-FACTOR":""].filter(Boolean).join(",");
+    let s = `${i+1}. [${ev.type.toUpperCase()}${f(ev)?" | "+f(ev):""}] ${ev.time?ev.time+" — ":""}${ev.text||"(empty)"}`;
+    state.items.filter(c=>c.parent===ev.id).forEach(c=> s += `\n     - (condition${f(c)?" | "+f(c):""}) ${c.text||"(empty)"}`);
+    return s;
+  }).join("\n") || "(chart is empty)";
+}
+function cfAnalysisText(){
+  return state.items.filter(i=>i.cf).map((cf,i)=>{
+    const an = state.analyses[cf.id]||{};
+    const l1 = (LEVEL1.find(l=>l.key===an.level1)||{}).name||"not classified";
+    const yes = Q15.filter(q=>(an.q15||{})[q.n]==="yes").map(q=>"Q"+q.n+" "+q.q).join("; ")||"none";
+    const no  = Q15.filter(q=>(an.q15||{})[q.n]==="no").length;
+    const rcs = (an.selected||[]).map(s=>s.key).join(" | ")||"none selected";
+    return `CF-${i+1}: "${cf.text}"\n  Level-1: ${l1}\n  15Q Yes: ${yes} (No answers: ${no})\n  Root causes: ${rcs}${an.otherNote?"\n  Notes: "+an.otherNote:""}`;
+  }).join("\n") || "(no causal factors defined)";
+}
+function actionsText(){
+  return state.actions.map((a,i)=>{
+    const cf = state.items.find(x=>x.id===a.cfId);
+    return `${i+1}. RC: ${a.rc} | CF: ${cf?cf.text:"?"} | Action: ${a.action||"(empty)"} | Owner: ${a.owner||"-"} | Due: ${a.due||"-"} | Status: ${a.status}`;
+  }).join("\n") || "(no corrective actions)";
+}
+const AI_STEP_PROMPTS = [
+ {title:"investigation plan", ask:"Review the investigation PLAN. Check: is the incident description specific (who/what/where/when/severity)? Is the evidence-preservation list complete for this type of incident (suggest concrete items likely missed)? Is the interview list complete and sensibly ordered? Flag legal/regulatory considerations if relevant. List concrete improvements."},
+ {title:"SnapCharT quality", ask:"Review the SNAPCHART timeline. Check each item: Events should be 'who did what' with active verbs, one action each, chronological, with date/times; Conditions should be passive 'was/were' factual statements attached to the right Event; the Incident should be the single worst event. Identify: (1) gaps in the sequence (what likely happened between events — suggest missing Events), (2) missing Conditions the investigator should gather (procedures, training, supervision, equipment state, environment, communications), (3) judgmental or vague wording to fix, (4) UNPROVEN items that most need verification and how to verify them."},
+ {title:"causal factor selection", ask:"Review the CAUSAL FACTOR selection using the 4-Step Method. For each marked CF: is it a big-picture 'who did what wrong' or 'what equipment failed' (not too narrow like a root cause, not the Incident itself)? Are any marked problems wrongly promoted/demoted? CRITICALLY: based on the chart, list any MISSED causal factors (failed safeguards). Most incidents have multiple CFs."},
+ {title:"root cause analysis", ask:"Review the ROOT CAUSE ANALYSIS of each causal factor. Check: (1) is the Level-1 classification right? (2) are the 15-Question yes/no answers consistent with the chart evidence? (3) do the selected root causes logically follow from the evidence — flag selections without supporting evidence on the chart, and suggest root causes/categories that the evidence points to but were not selected (use TapRooT-style category names: Procedures, Training, Quality Control, Communications, Management System, Human Engineering, Work Direction, Equipment Difficulty). (4) Remind about generic/systemic causes where relevant."},
+ {title:"corrective actions", ask:"Review each CORRECTIVE ACTION against SMARTER (Specific, Measurable, Accountable, Reasonable, Timely, Effective, Reviewed). For each: state pass/fail per letter briefly and rewrite it stronger. Push fixes UP the hierarchy of controls (remove hazard / error-proof design > guards > warnings > procedures/admin > training). Flag root causes with weak 're-train and remind' fixes, missing owners/dates, and missing effectiveness-verification steps."},
+ {title:"final report", ask:"Do an end-to-end CONSISTENCY review of the whole investigation: does the timeline support the causal factors, do the causal factors support the root causes, and does every root cause have an adequate corrective action? List the top gaps blocking sign-off. Then DRAFT a concise executive summary (5-8 sentences: what happened, why, key root causes, what will change) the investigator can paste into the report."}
+];
+async function aiReview(step){
+  const ai = getAI();
+  if(!ai.key){ openAISettings(); return; }
+  const btn = document.getElementById("ai-btn-"+step);
+  const out = document.getElementById("ai-out-"+step);
+  out.classList.add("show");
+  out.innerHTML = `<span class="muted">⏳ Asking ${esc(ai.model||"gpt-4o-mini")} to review the ${AI_STEP_PROMPTS[step].title}…</span>`;
+  btn.disabled = true;
+  const m = state.meta;
+  const context =
+`INVESTIGATION: ${m.title||"-"} | Date: ${m.date||"-"} | Location: ${m.location||"-"} | Class: ${m.cls||"-"}
+DESCRIPTION: ${m.desc||"-"}
+EVIDENCE PLAN: ${m.evidence||"-"}
+INTERVIEW PLAN: ${m.witnesses||"-"}
+
+SNAPCHART TIMELINE:
+${snapText()}
+
+CAUSAL FACTORS & ROOT CAUSE ANALYSIS:
+${cfAnalysisText()}
+
+CORRECTIVE ACTIONS:
+${actionsText()}`;
+  try{
+    const res = await fetch("https://api.openai.com/v1/chat/completions",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+ai.key },
+      body: JSON.stringify({
+        model: ai.model||"gpt-4o-mini",
+        temperature: 0.3,
+        max_tokens: 1100,
+        messages:[
+          {role:"system", content:"You are a senior incident-investigation coach expert in the TapRooT®-style methodology (SnapCharT® timelines, Causal Factors, Root Cause Tree® with its dictionary, SMARTER corrective actions). You review the human investigator's work and advise improvements. Be specific and reference their actual entries (quote short fragments). Be constructive and concise: use short headed sections and bullet points. Never invent facts about the incident — when information is missing, say what to collect. End with a one-line overall verdict: READY / NEEDS WORK, with the single most important next step."},
+          {role:"user", content: context + "\n\nTASK: " + AI_STEP_PROMPTS[step].ask }
+        ]})
+    });
+    if(!res.ok){
+      const errBody = await res.json().catch(()=>({}));
+      throw new Error(res.status + " " + (errBody.error&&errBody.error.message || res.statusText));
+    }
+    const data = await res.json();
+    const txt = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || "(empty response)";
+    out.innerHTML = mdLite(txt) + `<div class="muted" style="margin-top:10px;font-size:11px">⚠️ AI advice is advisory only — verify against the facts; the investigator owns all conclusions.</div>`;
+  }catch(e){
+    out.innerHTML = `<span class="ai-err">AI review failed: ${esc(e.message)}</span><br><span class="muted" style="font-size:12px">Check your API key (🤖 AI setup), internet connection, and OpenAI account credit. If you opened this file directly from disk and your browser blocks the request, host it on GitHub Pages or any web server.</span>`;
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+/* ================= boot ================= */
+function renderAll(){
+  renderInvSelect(); bindMeta(); renderChart();
+  if(currentStep===2) renderCF();
+  if(currentStep===3) renderRCASelect();
+  if(currentStep===4) renderCA();
+  if(currentStep===5) buildReport();
+}
+loadStore();
+renderAll();
+</script>
+</body>
+</html>
