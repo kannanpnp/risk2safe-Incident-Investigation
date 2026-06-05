@@ -1601,10 +1601,59 @@ function renderBarriers(){
       <td><select onchange="setBarrier('${b.id}','status',this.value)">${["Failed","Not present","Success"].map(x=>`<option ${b.status===x?"selected":""}>${x}</option>`).join("")}</select></td>
       <td><textarea oninput="setBarrier('${b.id}','notes',this.value)">${esc(b.notes)}</textarea></td>
       <td><button class="btn small danger" onclick="delBarrier('${b.id}')">✕</button></td></tr>`).join("")+`</tbody></table>` : `<div class="muted" style="padding:6px 2px">No barriers recorded yet.</div>`) +
-    `<div style="margin-top:8px"><button class="btn" onclick="addBarrier()">+ Add barrier</button></div>`;
+    `<div class="flex" style="margin-top:8px"><button class="btn" onclick="addBarrier()">+ Add barrier</button>
+     <button class="btn ai" id="ai-btn-bar" onclick="aiAnalyzeBarriers()">🤖 AI Analyze barriers</button></div>
+     <div class="ai-out" id="ai-out-bar" style="margin-top:8px"></div>`;
 }
 function barriersText(){
   return state.barriers.map(b=>`${b.name||"(unnamed)"} — ${b.status}${b.notes?" — "+b.notes:""}`).join("\n")||"(no barriers recorded)";
+}
+
+/* ===== AI barrier analyst ===== */
+async function aiAnalyzeBarriers(){
+  if(!getAI().key){ openAISettings(); return; }
+  const out=document.getElementById("ai-out-bar");
+  out.classList.add("show"); out.innerHTML='<span class="muted">⏳ analyzing hazards, targets and safeguards from the evidence…</span>';
+  const btn=document.getElementById("ai-btn-bar"); if(btn) btn.disabled=true;
+  try{
+    const txt=await aiCall(
+      'You are a barrier / safeguards analyst for incident investigations (Safeguards Analysis: Hazard → Safeguards → Target). From the evidence, identify every barrier that stood — or should have stood — between the hazard and the people/assets, considering: physical guards & containment, interlocks & trips, alarms & detection, isolation/permits (LOTO, hot work), procedures & checklists, second checks/verification, training & competence, supervision, PPE, housekeeping/spacing, inspection & maintenance, and emergency response/mitigation. Classify each as exactly one of: "Failed" (existed but did not work), "Not present" (should have existed but did not), "Success" (worked and limited the consequences). Also re-check the investigator\'s existing barrier entries. Reply with STRICT JSON only (no markdown fences): {"review":[{"name":"existing barrier name","verdict":"agree|change status to Failed/Not present/Success","why":"short reason"}],"suggestions":[{"name":"barrier","status":"Failed|Not present|Success","notes":"evidence-based reason"}],"summary":"1-2 sentences"}. Do not duplicate existing entries in suggestions. Ground every item in the provided evidence; do not invent facts.',
+      aiFullContext()+"\n\nTASK: Analyze the barriers for this incident.",
+      900);
+    let plan=null;
+    try{ plan=JSON.parse(txt.replace(/^\s*```json?\s*/i,"").replace(/```\s*$/,"")); }catch(e){}
+    if(!plan||(!Array.isArray(plan.suggestions)&&!Array.isArray(plan.review))){ out.innerHTML=mdLite(txt); return; }
+    window._barPlan=plan;
+    let h=`<h4>Barrier analysis</h4><p class="muted" style="font-size:12px">${esc(plan.summary||"")}</p>`;
+    if(plan.review&&plan.review.length){
+      h+=`<div style="font-size:12.5px"><b>Re-check of your existing entries:</b><ul style="margin:4px 0;padding-left:18px">`+
+        plan.review.map(r=>`<li><b>${esc(r.name)}</b> — ${esc(r.verdict)}${r.why?`: <span class="muted">${esc(r.why)}</span>`:""}</li>`).join("")+`</ul></div>`;
+    }
+    if(plan.suggestions&&plan.suggestions.length){
+      const color=s=>s==="Failed"?"#c0392b":s==="Success"?"#2e8b57":"#b3446c";
+      h+=`<div style="font-size:12.5px;margin-top:6px"><b>Barriers identified from the evidence:</b></div>`+
+        plan.suggestions.map(s=>`<div style="border:1px solid #e0d6f2;border-radius:7px;padding:7px 10px;margin:5px 0;background:#faf7ff">
+          <b>${esc(s.name)}</b> — <b style="color:${color(s.status)}">${esc(s.status)}</b><br><span style="font-size:12px">${esc(s.notes||"")}</span></div>`).join("")+
+        `<div class="flex" style="margin-top:8px"><button class="btn primary" onclick="applyBarriers()">✓ Add these to the barrier table</button></div>`;
+    } else h+=`<p class="muted" style="font-size:12px">No additional barriers identified beyond your existing entries.</p>`;
+    out.innerHTML=h;
+  }catch(e){ out.innerHTML='<span class="ai-err">'+esc(e.message)+'</span>'; }
+  finally{ if(btn) btn.disabled=false; }
+}
+function applyBarriers(){
+  const plan=window._barPlan; if(!plan||!plan.suggestions) return;
+  const have=new Set(state.barriers.map(b=>(b.name||"").trim().toLowerCase()));
+  let added=0;
+  plan.suggestions.forEach(s=>{
+    const key=(s.name||"").trim().toLowerCase();
+    if(!key||have.has(key)) return;
+    const status=["Failed","Not present","Success"].includes(s.status)?s.status:"Failed";
+    state.barriers.push({id:uid(),name:s.name,status,notes:s.notes||""});
+    have.add(key); added++;
+  });
+  save(); renderBarriers();
+  const out=document.getElementById("ai-out-bar");
+  if(out){ out.classList.add("show"); out.innerHTML=`<b style="color:var(--ok)">✓ ${added} barrier(s) added.</b> <span class="muted" style="font-size:12px">Review each status and note — the investigator owns the final classification. Failed / missing barriers should map to Causal Factors above.</span>`; }
 }
 
 /* ================= HFACS (step 4) ================= */
