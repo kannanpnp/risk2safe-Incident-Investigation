@@ -1088,7 +1088,8 @@ function renderCA(){
       </tr>`;}).join("") +
     `</tbody></table>
     <div class="flex" style="margin-top:10px"><button class="btn" onclick="addExtraAction()">+ Add another action</button>
-    <button class="btn ai" id="ai-btn-cons" onclick="aiConsolidate()">🤖 AI Consolidate similar actions</button></div>
+    <button class="btn ai" id="ai-btn-cons" onclick="aiConsolidate()">🤖 AI Consolidate similar actions</button>
+    <button class="btn primary" onclick="downloadExcel()">⬇ Download Excel tracker</button></div>
     <div class="ai-out" id="ai-out-cons" style="margin-top:10px"></div>
     <div class="hint" style="margin-top:10px"><b>Hierarchy of fixes (most → least effective):</b> remove the hazard / error-proof the design → guards & safeguards → warnings, alarms & displays → procedures & administrative controls → training & reminders. Prefer the highest practical level.</div>`;
 }
@@ -1349,6 +1350,65 @@ function applyConsolidation(){
   const out=document.getElementById("ai-out-cons");
   out.classList.add("show");
   out.innerHTML='<b style="color:var(--ok)">✓ Consolidation applied.</b> <span class="muted" style="font-size:12px">Rows sharing the same CA-G tag are now one combined action — give each group a single owner and due date.</span>';
+}
+
+/* ===== Excel download (corrective action tracker) ===== */
+function loadSheetJS(){
+  return new Promise((res,rej)=>{
+    if(window.XLSX) return res();
+    const s=document.createElement("script");
+    s.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+    const t=setTimeout(()=>rej(new Error("SheetJS load timed out (offline?)")), 8000);
+    s.onload=()=>{clearTimeout(t);res();}; s.onerror=()=>{clearTimeout(t);rej(new Error("SheetJS could not load (offline?)"));};
+    document.head.appendChild(s);
+  });
+}
+function caRows(){
+  return state.actions.map((a,i)=>{
+    const cf=state.items.find(x=>x.id===a.cfId);
+    return {"#":i+1,"Causal Factor":cf?cf.text:"","Root Cause":a.rc,"Corrective Action (SMARTER)":a.action,
+            "Owner":a.owner,"Due Date":a.due,"Status":a.status};
+  });
+}
+function dlBlob(blob,name){
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download=name; a.click();
+  URL.revokeObjectURL(a.href);
+}
+function exportBaseName(){
+  return ((state.meta.title||"investigation").replace(/[^\w\- ]+/g,"").trim().replace(/\s+/g,"_")||"investigation")+"_corrective_actions";
+}
+async function downloadExcel(){
+  ensureActions(); save();
+  if(!state.actions.length){ alert("No corrective actions yet — select root causes in Step 4 first."); return; }
+  const rows=caRows();
+  try{
+    await loadSheetJS();
+    const XLSX=window.XLSX;
+    const wb=XLSX.utils.book_new();
+    const meta=[
+      ["Risk2Safe — Corrective Action Tracker"],
+      ["Investigation:", state.meta.title||"-"],
+      ["Incident date:", state.meta.date||"-"],
+      ["Location:", state.meta.location||"-"],
+      ["Lead investigator:", state.meta.investigator||"-"],
+      ["Classification:", state.meta.cls||"-"],
+      ["Generated:", new Date().toLocaleString()],
+      []
+    ];
+    const ws=XLSX.utils.aoa_to_sheet(meta);
+    XLSX.utils.sheet_add_json(ws, rows, {origin:-1});
+    ws["!cols"]=[{wch:4},{wch:42},{wch:46},{wch:64},{wch:18},{wch:12},{wch:18}];
+    XLSX.utils.book_append_sheet(wb, ws, "Corrective Actions");
+    XLSX.writeFile(wb, exportBaseName()+".xlsx");
+  }catch(e){
+    // offline fallback: CSV with UTF-8 BOM (opens directly in Excel)
+    const head=Object.keys(rows[0]);
+    const q=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';
+    const csv="﻿"+[head.map(q).join(",")].concat(rows.map(r=>head.map(h=>q(r[h])).join(","))).join("\r\n");
+    dlBlob(new Blob([csv],{type:"text/csv;charset=utf-8"}), exportBaseName()+".csv");
+    alert("Excel library unavailable ("+e.message+") — downloaded a CSV instead, which opens in Excel.");
+  }
 }
 
 /* ================= boot ================= */
