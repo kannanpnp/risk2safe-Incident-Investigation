@@ -688,6 +688,7 @@ let currentStep = 0;
 
 function uid(){ return Math.random().toString(36).slice(2,10); }
 function esc(s){ return (s||"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function attrJS(v){ return esc(JSON.stringify(v)); } // safe to embed inside double-quoted HTML attributes
 
 function blankInv(title){
   return { id: uid(), created: new Date().toISOString(),
@@ -957,7 +958,7 @@ function rcRow(cfId,catName,nrcName,rc,an){
   const key = rcKey(catName,nrcName,rc.name);
   const sel = isSelected(an,key);
   return `<div class="rc-row ${sel?'open':''}">
-    <input type="checkbox" ${sel?"checked":""} onchange="toggleRC('${cfId}',${JSON.stringify(catName)},${JSON.stringify(nrcName)},${JSON.stringify(rc.name)})">
+    <input type="checkbox" ${sel?"checked":""} onchange="toggleRC('${cfId}',${attrJS(catName)},${attrJS(nrcName)},${attrJS(rc.name)})">
     <div style="flex:1">
       <span class="rc-name" onclick="this.closest('.rc-row').classList.toggle('open')">${esc(rc.name)} <span class="muted" style="font-weight:400;font-size:11px">(show questions)</span></span>
       <div class="rc-qs"><ul>${rc.qs.map(q=>`<li>${esc(q)}</li>`).join("")}</ul></div>
@@ -1039,7 +1040,7 @@ function renderRCA(){
   }
   if(an.selected.length){
     html += `<h3>Root causes identified for this Causal Factor</h3><div>` +
-      an.selected.map(s=>`<span class="rc-tag">${esc(s.key)} <span class="x" onclick="toggleRC('${cfId}',${JSON.stringify(s.cat)},${JSON.stringify(s.nrc)},${JSON.stringify(s.rc)})">✕</span></span>`).join("") +
+      an.selected.map(s=>`<span class="rc-tag">${esc(s.key)} <span class="x" onclick="toggleRC('${cfId}',${attrJS(s.cat)},${attrJS(s.nrc)},${attrJS(s.rc)})">✕</span></span>`).join("") +
       `</div><div class="hint" style="margin-top:10px">Now develop a corrective action for <b>each</b> root cause in Step 5.</div>`;
   }
   body.innerHTML = html;
